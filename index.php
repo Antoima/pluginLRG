@@ -17,7 +17,7 @@
       href="src/css/styles.css"
     />
   </head>
-  <body class="loading">
+  <body>
     <div id="loading">
       <div class="spinner-border text-primary" role="status">
         <span class="sr-only">Cargando...</span>
@@ -56,71 +56,6 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.4.20/dist/sweetalert2.all.min.js"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
-    <script>
-      $(document).ready(function () {
-        // Ocultar el spinner de carga cuando la página haya terminado de cargarse
-        $(window).on('load', function () {
-          $('body').removeClass('loading');
-        });
-
-        const puertosPorHost = {
-          "smtp.gmail.com": ["587 (TLS)", "465 (SSL)"],
-          "smtp.office365.com": ["587 (TLS)"],
-          "smtp.mail.yahoo.com": ["587 (TLS)", "465 (SSL)"],
-          "mail.smtp2go.com": ["2525 (TLS)", "587 (TLS)", "465 (SSL)"]
-        };
-
-        function actualizarPuertos() {
-          const hostSeleccionado = $("#host").val();
-          const puertos = puertosPorHost[hostSeleccionado] || [];
-          const puertoSelect = $("#puerto");
-          puertoSelect.empty();
-          puertos.forEach(puerto => {
-            puertoSelect.append(new Option(puerto, puerto.split(" ")[0]));
-          });
-        }
-
-        $("#host").on("change", actualizarPuertos);
-        actualizarPuertos(); // Llamar al cargar la página para establecer los puertos iniciales
-
-        $("#smtpForm").on("submit", function (event) {
-          event.preventDefault();
-          $('body').addClass('loading'); // Mostrar el spinner de carga durante la prueba de conexión SMTP
-          $.ajax({
-            url: "https://pl.luisguevara.net/includes/HP.php",
-            type: "POST",
-            data: $(this).serialize(),
-            success: function (response) {
-              $('body').removeClass('loading'); // Ocultar el spinner de carga cuando la prueba haya terminado
-              const result = JSON.parse(response);
-              if (result.status === 'success') {
-                console.log("Conexión SMTP exitosa:", result.message);
-                Swal.fire({
-                  icon: 'success',
-                  title: 'Éxito',
-                  text: result.message,
-                });
-              } else {
-                console.error("Error en la conexión SMTP:", result.message);
-                Swal.fire({
-                  icon: 'error',
-                  title: 'Error',
-                  text: "Hubo un problema al intentar conectar con el servidor SMTP. Por favor, revisa los datos e inténtalo de nuevo.",
-                });
-              }
-            },
-            error: function (xhr, status, error) {
-              $('body').removeClass('loading'); // Ocultar el spinner de carga cuando la prueba haya terminado
-              console.error("Error en la conexión SMTP:", xhr.responseText);
-              Swal.fire({
-                icon: 'error',
-                title: 'Error',
-                text: "Hubo un problema al intentar conectar con el servidor SMTP. Por favor, revisa los datos e inténtalo de nuevo.",
-              });
-            },
-          });
-        });
-      });
-    </script>
+    <script src="src/js/scripts.js"></script>
   </body>
 </html>
