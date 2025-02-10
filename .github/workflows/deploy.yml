@@ -20,7 +20,12 @@ jobs:
           DREAMHOST_DOMAIN: ${{ secrets.DREAMHOST_DOMAIN }}
         run: |
           echo "Deploying to DreamHost..."
-          rsync -avz --delete -e "sshpass -p $DREAMHOST_PASS ssh -o StrictHostKeyChecking=no" ./ $DREAMHOST_USER@$DREAMHOST_HOST:/home/$DREAMHOST_USER/$DREAMHOST_DOMAIN
+          rsync -avz --delete -e "sshpass -p $DREAMHOST_PASS ssh -o StrictHostKeyChecking=no" \
+            --exclude '.git/' \
+            --exclude '.github/' \
+            --exclude 'LICENSE' \
+            --exclude 'README.md' \
+            ./ $DREAMHOST_USER@$DREAMHOST_HOST:/home/$DREAMHOST_USER/$DREAMHOST_DOMAIN
 
       - name: Install curl and jq
         run: sudo apt-get update && sudo apt-get install -y curl jq
