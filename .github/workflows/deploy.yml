@@ -26,6 +26,8 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y curl jq
 
       - name: Verify Deployment
+        env:
+          DREAMHOST_DOMAIN: ${{ secrets.DREAMHOST_DOMAIN }}
         run: |
           echo "Verifying deployment..."
           max_attempts=5
@@ -33,7 +35,7 @@ jobs:
           while [ $attempt -le $max_attempts ]
           do
             echo "Attempt $attempt of $max_attempts"
-            response=$(curl -sI https://alex.rubikops.com)
+            response=$(curl -sI https://$DREAMHOST_DOMAIN)
             status_code=$(echo "$response" | awk '/^HTTP/{print $2}')
             if [ "$status_code" = "200" ]; then
               echo "Deployment verified successfully. Status code: $status_code"
