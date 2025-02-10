@@ -1,0 +1,55 @@
+name: Deploy to DreamHost
+
+on:
+  push:
+    branches:
+      - main # Cambia esto si usas otra rama
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Deploy to DreamHost
+        env:
+          DREAMHOST_USER: ${{ secrets.DREAMHOST_USER }}
+          DREAMHOST_PASS: ${{ secrets.DREAMHOST_PASS }}
+          DREAMHOST_HOST: ${{ secrets.DREAMHOST_HOST }}
+          DREAMHOST_DOMAIN: ${{ secrets.DREAMHOST_DOMAIN }}
+        run: |
+          echo "Deploying to DreamHost..."
+          rsync -avz --delete -e "sshpass -p $DREAMHOST_PASS ssh -o StrictHostKeyChecking=no" ./ $DREAMHOST_USER@$DREAMHOST_HOST:/home/$DREAMHOST_USER/$DREAMHOST_DOMAIN
+
+      - name: Install curl and jq
+        run: sudo apt-get update && sudo apt-get install -y curl jq
+
+      - name: Verify Deployment
+        run: |
+          echo "Verifying deployment..."
+          max_attempts=5
+          attempt=1
+          while [ $attempt -le $max_attempts ]
+          do
+            echo "Attempt $attempt of $max_attempts"
+            response=$(curl -sI https://alex.rubikops.com)
+            status_code=$(echo "$response" | awk '/^HTTP/{print $2}')
+            if [ "$status_code" = "200" ]; then
+              echo "Deployment verified successfully. Status code: $status_code"
+              exit 0
+            else
+              echo "Unexpected status code: $status_code"
+              echo "Response headers:"
+              echo "$response"
+            fi
+            attempt=$((attempt+1))
+            [ $attempt -le $max_attempts ] && echo "Waiting 30 seconds before next attempt..." && sleep 30
+          done
+          echo "Deployment verification failed after $max_attempts attempts."
+          exit 1
+
+      - name: Notify Success
+        if: success()
+        run: |
+          echo "Deployment successful!" # Aquí podrías integrar con un servicio de notificaciones
