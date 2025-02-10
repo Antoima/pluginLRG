@@ -12,8 +12,17 @@
       rel="stylesheet"
       href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css"
     />
+    <link
+      rel="stylesheet"
+      href="src/css/styles.css"
+    />
   </head>
   <body>
+    <div id="loading">
+      <div class="spinner-border text-primary" role="status">
+        <span class="sr-only">Cargando...</span>
+      </div>
+    </div>
     <div class="container mt-5">
       <h1 class="text-center">Probar Conexión SMTP</h1>
       <form id="smtpForm" class="mt-4">
@@ -49,6 +58,11 @@
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
     <script>
       $(document).ready(function () {
+        // Mostrar el spinner de carga cuando la página se está cargando
+        $(window).on('load', function () {
+          $('#loading').fadeOut();
+        });
+
         const puertosPorHost = {
           "smtp.gmail.com": ["587 (TLS)", "465 (SSL)"],
           "smtp.office365.com": ["587 (TLS)"],
@@ -71,11 +85,13 @@
 
         $("#smtpForm").on("submit", function (event) {
           event.preventDefault();
+          $('#loading').fadeIn(); // Mostrar el spinner de carga durante la prueba de conexión SMTP
           $.ajax({
-            url: "includes/hp.php",
+            url: "https://pl.luisguevara.net/includes/hp.php",
             type: "POST",
             data: $(this).serialize(),
             success: function (response) {
+              $('#loading').fadeOut(); // Ocultar el spinner de carga cuando la prueba haya terminado
               const result = JSON.parse(response);
               if (result.status === 'success') {
                 console.log("Conexión SMTP exitosa:", result.message);
@@ -89,16 +105,17 @@
                 Swal.fire({
                   icon: 'error',
                   title: 'Error',
-                  text: "Hubo un problema al intentar conectar con el servidor SMTP. Por favor, revisa los datos e inténtalo de nuevo.",
+                  text: "Hubo un problema al intentar conectar con el servidor SMTP. Por favor, revisa los datos e inténtalo de nuevo. come azucar",
                 });
               }
             },
             error: function (xhr, status, error) {
+              $('#loading').fadeOut(); // Ocultar el spinner de carga cuando la prueba haya terminado
               console.error("Error en la conexión SMTP:", xhr.responseText);
               Swal.fire({
                 icon: 'error',
                 title: 'Error',
-                text: "Hubo un problema al intentar conectar con el servidor SMTP. Por favor, revisa los datos e inténtalo de nuevo.",
+                text: "Hubo un problema al intentar conectar con el servidor SMTP. Por favor, revisa los datos e inténtalo de nuevo. mmgv XD",
               });
             },
           });
