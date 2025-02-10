@@ -87,7 +87,7 @@
           event.preventDefault();
           $('#loading').fadeIn(); // Mostrar el spinner de carga durante la prueba de conexión SMTP
           $.ajax({
-            url: "https://pl.luisguevara.net/includes/hp.php",
+            url: "https://pl.luisguevara.net/includes/HP.php",
             type: "POST",
             data: $(this).serialize(),
             success: function (response) {
