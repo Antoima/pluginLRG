@@ -24,7 +24,7 @@
       </div>
     </div>
     <div class="container mt-5">
-      <h1 class="text-center">Probar Conexión SMTP</h1>
+      <h1 class="text-center">Lo veo y lo quiero, SMTP</h1>
       <form id="smtpForm" class="mt-4">
         <div class="form-group">
           <label for="host">Host:</label>
@@ -49,7 +49,7 @@
           <label for="contraseña">Contraseña:</label>
           <input type="password" class="form-control" id="contraseña" name="contraseña" required />
         </div>
-        <button type="submit" class="btn btn-primary btn-block">Probar Conexión</button>
+        <button type="submit" class="btn btn-primary btn-block">Lo quiero y lo tengo</button>
       </form>
     </div>
 
