@@ -1,5 +1,11 @@
-#loading {
+body.loading #loading {
+  display: block;
+}
+body:not(.loading) #loading {
   display: none;
+}
+#loading {
+  display: block; /* Mostrar el spinner de carga por defecto */
   position: fixed;
   width: 100%;
   height: 100%;
