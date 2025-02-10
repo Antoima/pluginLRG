@@ -4,6 +4,15 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Probar Conexión SMTP</title>
+    <meta name="description" content="Página para probar la conexión SMTP con diferentes proveedores de correo electrónico." />
+    <meta name="keywords" content="SMTP, conexión, correo electrónico, Gmail, Outlook, Yahoo, SMTP2GO" />
+    <meta name="robots" content="index, follow" />
+    <meta property="og:title" content="Probar Conexión SMTP" />
+    <meta property="og:description" content="Página para probar la conexión SMTP con diferentes proveedores de correo electrónico." />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://tu-dominio.com/probar-conexion-smtp" />
+    <meta property="og:image" content="https://tu-dominio.com/imagen.jpg" />
+    <link rel="canonical" href="https://tu-dominio.com/probar-conexion-smtp" />
     <link
       rel="stylesheet"
       href="https://cdn.jsdelivr.net/npm/sweetalert2@11.4.20/dist/sweetalert2.min.css"
