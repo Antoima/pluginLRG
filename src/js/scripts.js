@@ -109,7 +109,7 @@ $(document).ready(function () {
               confirmButtonText: "Aceptar",
             }).then((result) => {
               if (result.isConfirmed) {
-                window.location.href = `sendEmail.php2?access_token=${accessToken}`;
+                window.location.href = `sendEmail.php?access_token=${accessToken}`;
               }
             });
           },
