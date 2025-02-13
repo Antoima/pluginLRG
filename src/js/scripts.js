@@ -25,6 +25,19 @@ $(document).ready(function () {
 
   $("#smtpForm").on("submit", function (event) {
     event.preventDefault();
+
+    // Validar datos del formulario
+    const host = $("#host").val();
+    const puerto = $("#puerto").val();
+    if (!host || !puerto) {
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: "Por favor, completa todos los campos.",
+      });
+      return;
+    }
+
     $("#loading").fadeIn();
     $.ajax({
       url: "https://pl.luisguevara.net/includes/HP.php",
@@ -45,7 +58,9 @@ $(document).ready(function () {
           Swal.fire({
             icon: "error",
             title: "Error",
-            text: "Hubo un problema al intentar conectar con el servidor SMTP. Por favor, revisa los datos e inténtalo de nuevo.",
+            text:
+              result.message ||
+              "Hubo un problema al intentar conectar con el servidor SMTP. Por favor, revisa los datos e inténtalo de nuevo.",
           });
         }
       },
@@ -73,12 +88,10 @@ $(document).ready(function () {
       allowOutsideClick: false,
     });
 
-    const clientId =
-      "658913322717-vm6cbme77k3c0q383r64tgqoogp7ahs2.apps.googleusercontent.com";
     const redirectUri = "https://pl.luisguevara.net/";
     const scope =
       "https://www.googleapis.com/auth/gmail.send https://www.googleapis.com/auth/userinfo.email";
-    const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=token&scope=${scope}`;
+    const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${googleClientId}&redirect_uri=${redirectUri}&response_type=token&scope=${scope}`;
 
     window.location.href = authUrl;
   });
