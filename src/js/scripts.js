@@ -23,6 +23,9 @@ $(document).ready(function () {
   $("#host").on("change", actualizarPuertos);
   actualizarPuertos();
 
+  // Deshabilitar y ocultar el botón "Lo quiero y lo tengo"
+  $("#submitBtn").prop("disabled", true).hide();
+
   $("#smtpForm").on("submit", function (event) {
     event.preventDefault();
     $("#loading").fadeIn();
