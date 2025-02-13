@@ -1,3 +1,8 @@
+<?php
+// Cargar la configuración desde el archivo config.php
+$config = require '/home/dh_292vea/configuracion/config.php';
+$recaptchaSiteKey = $config['recaptcha_site_key'];
+?>
 <!DOCTYPE html>
 <html lang="es">
   <head>
@@ -7,13 +12,18 @@
     <link
       rel="stylesheet"
       href="https://cdn.jsdelivr.net/npm/sweetalert2@11.4.20/dist/sweetalert2.min.css"
+      integrity="sha512-..."
+      crossorigin="anonymous"
     />
     <link
       rel="stylesheet"
       href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css"
+      integrity="sha512-..."
+      crossorigin="anonymous"
     />
     <link rel="stylesheet" href="src/css/styles.css" />
-    <script src="https://www.google.com/recaptcha/api.js?render=6Lckg9UqAAAAAEVFkZhz7IqoE8iQln4ehpVmBKTS"></script>
+    <!-- Incluir el script de reCAPTCHA con la clave dinámica -->
+    <script src="https://www.google.com/recaptcha/api.js?render=<?php echo $recaptchaSiteKey; ?>"></script>
   </head>
   <body>
     <div class="container mt-5">
@@ -58,9 +68,9 @@
       </div>
     </div>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.4.20/dist/sweetalert2.all.min.js"></script>
-    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js" integrity="sha512-..." crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.4.20/dist/sweetalert2.all.min.js" integrity="sha512-..." crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js" integrity="sha512-..." crossorigin="anonymous"></script>
     <script src="src/js/sendEmail.js"></script>
   </body>
 </html>

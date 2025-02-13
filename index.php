@@ -16,17 +16,21 @@
     <link
       rel="stylesheet"
       href="https://cdn.jsdelivr.net/npm/sweetalert2@11.4.20/dist/sweetalert2.min.css"
+      integrity="sha512-..."
+      crossorigin="anonymous"
     />
     <link
       rel="stylesheet"
       href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css"
+      integrity="sha512-..."
+      crossorigin="anonymous"
     />
     <link
       rel="stylesheet"
       href="src/css/styles.css"
     />
     <script src="https://apis.google.com/js/platform.js" async defer></script>
-    <meta name="google-signin-client_id" content="658913322717-vm6cbme77k3c0q383r64tgqoogp7ahs2.apps.googleusercontent.com">
+    <meta name="google-signin-client_id" content="<?php echo $googleClientId; ?>">
   </head>
   <body>
     <div id="loading">
@@ -60,7 +64,6 @@
           <label for="contraseña">Contraseña:</label>
           <input type="password" class="form-control" id="contraseña" name="contraseña" required disabled />
         </div>
-        <!-- <button type="submit" id="submitBtn" class="btn btn-primary btn-block">Lo quiero y lo tengo</button> -->
         <button type="button" id="checkGoogleConnection" class="btn btn-google btn-block mt-2">
           <span id="googleButtonText">Comprobar Conexión con Google</span>
           <div id="googleButtonSpinner" class="spinner-border spinner-border-sm text-light d-none" role="status">
@@ -70,9 +73,9 @@
       </form>
     </div>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.4.20/dist/sweetalert2.all.min.js"></script>
-    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js" integrity="sha512-..." crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.4.20/dist/sweetalert2.all.min.js" integrity="sha512-..." crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js" integrity="sha512-..." crossorigin="anonymous"></script>
     <script src="src/js/scripts.js"></script>
     <script src="src/js/sendEmail.js"></script>
   </body>
