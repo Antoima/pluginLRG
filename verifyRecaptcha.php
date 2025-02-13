@@ -11,17 +11,30 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 }
 
 // Verificar que se haya enviado el token de reCAPTCHA
-if (empty($_POST['recaptchaResponse'])) {
+$recaptchaResponse = filter_input(INPUT_POST, 'recaptchaResponse', FILTER_SANITIZE_STRING);
+if (empty($recaptchaResponse)) {
     http_response_code(400); // Solicitud incorrecta
     echo json_encode(['success' => false, 'message' => 'Falta el token de reCAPTCHA.']);
     exit;
 }
 
-$recaptchaResponse = $_POST['recaptchaResponse'];
-
 // Verificar el token con el servidor de reCAPTCHA
-$url = "https://www.google.com/recaptcha/api/siteverify?secret=$secretKey&response=$recaptchaResponse";
-$response = file_get_contents($url);
+$url = "https://www.google.com/recaptcha/api/siteverify";
+$data = [
+    'secret' => $secretKey,
+    'response' => $recaptchaResponse,
+];
+
+$options = [
+    'http' => [
+        'header' => "Content-type: application/x-www-form-urlencoded\r\n",
+        'method' => 'POST',
+        'content' => http_build_query($data),
+    ],
+];
+
+$context = stream_context_create($options);
+$response = file_get_contents($url, false, $context);
 
 if ($response === false) {
     http_response_code(500); // Error del servidor
@@ -31,7 +44,6 @@ if ($response === false) {
 
 $responseKeys = json_decode($response, true);
 
-// Verificar que la respuesta sea válida
 if (json_last_error() !== JSON_ERROR_NONE || !isset($responseKeys['success'])) {
     http_response_code(500); // Error del servidor
     echo json_encode(['success' => false, 'message' => 'Respuesta inválida del servidor de reCAPTCHA.']);
@@ -39,9 +51,24 @@ if (json_last_error() !== JSON_ERROR_NONE || !isset($responseKeys['success'])) {
 }
 
 // Verificar si reCAPTCHA fue exitoso
-if (intval($responseKeys["success"]) !== 1) {
+if ($responseKeys['success'] !== true) {
+    $errorCodes = $responseKeys['error-codes'] ?? [];
+    $errorMessage = 'reCAPTCHA verification failed.';
+    if (in_array('timeout-or-duplicate', $errorCodes)) {
+        $errorMessage = 'El token de reCAPTCHA ha expirado. Por favor, recarga la página.';
+    } elseif (in_array('invalid-input-secret', $errorCodes)) {
+        $errorMessage = 'Clave secreta de reCAPTCHA inválida.';
+    }
+
     http_response_code(400); // Solicitud incorrecta
-    echo json_encode(['success' => false, 'message' => 'reCAPTCHA verification failed.']);
+    echo json_encode(['success' => false, 'message' => $errorMessage]);
+    exit;
+}
+
+// Si estás usando reCAPTCHA v3, verifica el puntaje
+if (isset($responseKeys['score']) && $responseKeys['score'] < 0.5) {
+    http_response_code(400); // Solicitud incorrecta
+    echo json_encode(['success' => false, 'message' => 'reCAPTCHA score too low.']);
     exit;
 }
 
