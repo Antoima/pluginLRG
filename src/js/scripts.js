@@ -102,43 +102,11 @@ $(document).ready(function () {
       const params = new URLSearchParams(hash.substring(1));
       const accessToken = params.get("access_token");
       if (accessToken) {
-        $("#loading").removeClass("d-none");
+        // Almacenar el token en localStorage
+        localStorage.setItem("access_token", accessToken);
 
-        $.ajax({
-          url: "https://www.googleapis.com/oauth2/v1/userinfo?alt=json",
-          type: "GET",
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-          },
-          success: function (response) {
-            console.log("Información del usuario:", response);
-            $("#loading").addClass("d-none");
-            Swal.fire({
-              title: "Conexión exitosa",
-              html: `
-                <p><strong>Foto de perfil:</strong> <img src="${response.picture}" alt="Foto de perfil"></p>
-                <p><strong>Correo electrónico:</strong> ${response.email}</p>
-                <p><strong>Correo verificado:</strong> ${response.verified_email}</p>
-                <p><strong>Token de acceso:</strong> ${accessToken}</p>
-              `,
-              icon: "success",
-              confirmButtonText: "Aceptar",
-            }).then((result) => {
-              if (result.isConfirmed) {
-                window.location.href = `sendEmail.php?access_token=${accessToken}`;
-              }
-            });
-          },
-          error: function (xhr, status, error) {
-            $("#loading").addClass("d-none");
-            Swal.fire({
-              title: "Error",
-              text: "Hubo un problema al obtener la información del usuario.",
-              icon: "error",
-              confirmButtonText: "Aceptar",
-            });
-          },
-        });
+        // Redirigir sin el token en la URL
+        window.location.href = "sendEmail.php";
       }
     }
   }
