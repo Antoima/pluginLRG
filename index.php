@@ -10,9 +10,9 @@
     <meta property="og:title" content="Probar Conexión SMTP" />
     <meta property="og:description" content="Página para probar la conexión SMTP con diferentes proveedores de correo electrónico." />
     <meta property="og:type" content="website" />
-    <meta property="og:url" content="https://tu-dominio.com/probar-conexion-smtp" />
-    <meta property="og:image" content="https://tu-dominio.com/imagen.jpg" />
-    <link rel="canonical" href="https://tu-dominio.com/probar-conexion-smtp" />
+    <meta property="og:url" content="https://pl.luisguevara.net/probar-conexion-smtp" />
+    <meta property="og:image" content="https://pl.luisguevara.net/imagen.jpg" />
+    <link rel="canonical" href="https://pl.luisguevara.net/probar-conexion-smtp" />
     <link
       rel="stylesheet"
       href="https://cdn.jsdelivr.net/npm/sweetalert2@11.4.20/dist/sweetalert2.min.css"
@@ -59,6 +59,7 @@
           <input type="password" class="form-control" id="contraseña" name="contraseña" required />
         </div>
         <button type="submit" class="btn btn-primary btn-block">Lo quiero y lo tengo</button>
+        <button type="button" id="checkGoogleConnection" class="btn btn-secondary btn-block mt-2">Comprobar Conexión con Google</button>
       </form>
     </div>
 
@@ -66,5 +67,6 @@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.4.20/dist/sweetalert2.all.min.js"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
     <script src="src/js/scripts.js"></script>
+    <script src="src/js/sendEmail.js"></script>
   </body>
 </html>
