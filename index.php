@@ -10,18 +10,24 @@ $ruta_firma = '/home/dh_292vea/firmas/firma.bin'; // Ruta a la firma generada
 $clave_publica = openssl_pkey_get_public(file_get_contents($ruta_clave_publica));
 if (!$clave_publica) {
     die("Error al cargar la clave pública.");
+} else {
+    echo "<script>console.log('Clave pública cargada correctamente.');</script>";
 }
 
 // Cargar la firma
 $firma = file_get_contents($ruta_firma);
 if (!$firma) {
     die("Error al cargar la firma.");
+} else {
+    echo "<script>console.log('Firma cargada correctamente.');</script>";
 }
 
 // Cargar el contenido del archivo actual
 $datos = file_get_contents(__FILE__);
 if (!$datos) {
     die("Error al cargar el archivo.");
+} else {
+    echo "<script>console.log('Archivo cargado correctamente.');</script>";
 }
 
 // Verificar la firma
