@@ -6,8 +6,17 @@ $config = require '/home/dh_292vea/configuracion/config.php';
 $hashEsperado = $config['file_hashes']['index.php']; // Obtener el hash desde la configuración
 $hashActual = base64_encode(hash_file('sha512', __FILE__, true));
 
+// Depuración: Mostrar los hashes en la consola
+echo "<script>console.log('Hash esperado:', " . json_encode($hashEsperado) . ");</script>";
+echo "<script>console.log('Hash actual:', " . json_encode($hashActual) . ");</script>";
+
 if ($hashActual !== $hashEsperado) {
+    // Depuración: Mostrar un mensaje de error en la consola
+    echo "<script>console.error('¡Advertencia! El archivo index.php ha sido modificado. Acceso denegado.');</script>";
     die("¡Advertencia! El archivo index.php ha sido modificado. Acceso denegado.");
+} else {
+    // Depuración: Mostrar un mensaje de éxito en la consola
+    echo "<script>console.log('La integridad del archivo index.php ha sido verificada correctamente.');</script>";
 }
 
 // Continuar con la carga normal de la página
