@@ -1,6 +1,4 @@
 <?php
-// filepath: /C:/Users/Usuario/Documents/php-puro/dream-hots/pluginLRG/verifyRecaptcha.php
-
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $recaptchaResponse = $_POST['recaptchaResponse'];
     $secretKey = '6Lckg9UqAAAAAIhUzJRTiINsZZ-wiUxDgxII7-jr';

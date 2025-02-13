@@ -1,5 +1,4 @@
 $(document).ready(function () {
-  // Mostrar el spinner de carga cuando la página se está cargando
   $(window).on("load", function () {
     $("#loading").fadeOut();
   });
@@ -22,17 +21,17 @@ $(document).ready(function () {
   }
 
   $("#host").on("change", actualizarPuertos);
-  actualizarPuertos(); // Llamar al cargar la página para establecer los puertos iniciales
+  actualizarPuertos();
 
   $("#smtpForm").on("submit", function (event) {
     event.preventDefault();
-    $("#loading").fadeIn(); // Mostrar el spinner de carga durante la prueba de conexión SMTP
+    $("#loading").fadeIn();
     $.ajax({
       url: "https://pl.luisguevara.net/includes/HP.php",
       type: "POST",
       data: $(this).serialize(),
       success: function (response) {
-        $("#loading").fadeOut(); // Ocultar el spinner de carga cuando la prueba haya terminado
+        $("#loading").fadeOut();
         const result = JSON.parse(response);
         if (result.status === "success") {
           console.log("Conexión SMTP exitosa:", result.message);
@@ -51,7 +50,7 @@ $(document).ready(function () {
         }
       },
       error: function (xhr, status, error) {
-        $("#loading").fadeOut(); // Ocultar el spinner de carga cuando la prueba haya terminado
+        $("#loading").fadeOut();
         console.error("Error en la conexión SMTP:", xhr.responseText);
         Swal.fire({
           icon: "error",
@@ -71,29 +70,24 @@ $(document).ready(function () {
       allowOutsideClick: false,
     });
 
-    // Lógica para comprobar la conexión con Google usando OAuth
     const clientId =
       "658913322717-vm6cbme77k3c0q383r64tgqoogp7ahs2.apps.googleusercontent.com";
-    const redirectUri = "https://pl.luisguevara.net/"; // Cambia esto a la URL de tu aplicación
+    const redirectUri = "https://pl.luisguevara.net/";
     const scope =
       "https://www.googleapis.com/auth/gmail.send https://www.googleapis.com/auth/userinfo.email";
     const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=token&scope=${scope}`;
 
-    // Redirigir al usuario a la URL de autorización de OAuth
     window.location.href = authUrl;
   });
 
-  // Manejar la redirección y extraer el token de acceso
   function handleOAuthRedirect() {
     const hash = window.location.hash;
     if (hash) {
       const params = new URLSearchParams(hash.substring(1));
       const accessToken = params.get("access_token");
       if (accessToken) {
-        // Mostrar el spinner de carga mientras se obtiene la información del usuario
         $("#loading").removeClass("d-none");
 
-        // Obtener la información del usuario
         $.ajax({
           url: "https://www.googleapis.com/oauth2/v1/userinfo?alt=json",
           type: "GET",
@@ -102,7 +96,7 @@ $(document).ready(function () {
           },
           success: function (response) {
             console.log("Información del usuario:", response);
-            $("#loading").addClass("d-none"); // Ocultar el spinner de carga
+            $("#loading").addClass("d-none");
             Swal.fire({
               title: "Conexión exitosa",
               html: `
@@ -115,13 +109,12 @@ $(document).ready(function () {
               confirmButtonText: "Aceptar",
             }).then((result) => {
               if (result.isConfirmed) {
-                // Redirigir al formulario de envío de correo
                 window.location.href = `sendEmail.html?access_token=${accessToken}`;
               }
             });
           },
           error: function (xhr, status, error) {
-            $("#loading").addClass("d-none"); // Ocultar el spinner de carga
+            $("#loading").addClass("d-none");
             Swal.fire({
               title: "Error",
               text: "Hubo un problema al obtener la información del usuario.",
