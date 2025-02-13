@@ -74,7 +74,7 @@ $(document).ready(function () {
     // Lógica para comprobar la conexión con Google usando OAuth
     const clientId =
       "658913322717-vm6cbme77k3c0q383r64tgqoogp7ahs2.apps.googleusercontent.com";
-    const redirectUri = "http://localhost:8000/"; // Cambia esto a la URL de tu aplicación
+    const redirectUri = "https://pl.luisguevara.net/"; // Cambia esto a la URL de tu aplicación
     const scope =
       "https://www.googleapis.com/auth/gmail.send https://www.googleapis.com/auth/userinfo.email";
     const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=token&scope=${scope}`;
