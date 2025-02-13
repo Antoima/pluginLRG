@@ -62,6 +62,9 @@ $(document).ready(function () {
   });
 
   $("#checkGoogleConnection").click(function () {
+    $("#googleButtonText").addClass("d-none");
+    $("#googleButtonSpinner").removeClass("d-none");
+
     Swal.fire({
       title: "Comprobando conexión...",
       text: "Por favor, espera mientras comprobamos la conexión con Google.",

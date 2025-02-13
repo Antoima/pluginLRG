@@ -25,6 +25,8 @@
       rel="stylesheet"
       href="src/css/styles.css"
     />
+    <script src="https://apis.google.com/js/platform.js" async defer></script>
+    <meta name="google-signin-client_id" content="658913322717-vm6cbme77k3c0q383r64tgqoogp7ahs2.apps.googleusercontent.com">
   </head>
   <body>
     <div id="loading">
@@ -59,7 +61,12 @@
           <input type="password" class="form-control" id="contraseña" name="contraseña" required disabled />
         </div>
         <!-- <button type="submit" id="submitBtn" class="btn btn-primary btn-block">Lo quiero y lo tengo</button> -->
-        <button type="button" id="checkGoogleConnection" class="btn btn-secondary btn-block mt-2">Comprobar Conexión con Google</button>
+        <button type="button" id="checkGoogleConnection" class="btn btn-google btn-block mt-2">
+          <span id="googleButtonText">Comprobar Conexión con Google</span>
+          <div id="googleButtonSpinner" class="spinner-border spinner-border-sm text-light d-none" role="status">
+            <span class="sr-only">Cargando...</span>
+          </div>
+        </button>
       </form>
     </div>
 
