@@ -1,8 +1,4 @@
 $(document).ready(function () {
-  $(window).on("load", function () {
-    $("#loading").fadeOut();
-  });
-
   const puertosPorHost = {
     "smtp.gmail.com": ["587 (TLS)", "465 (SSL)"],
     "smtp.office365.com": ["587 (TLS)"],
@@ -23,8 +19,9 @@ $(document).ready(function () {
   $("#host").on("change", actualizarPuertos);
   actualizarPuertos();
 
-  // Deshabilitar y ocultar el botón "Lo quiero y lo tengo"
-  $("#submitBtn").prop("disabled", true).hide();
+  // Deshabilitar los campos de entrada "Usuario" y "Contraseña"
+  $("#usuario").prop("disabled", true);
+  $("#contraseña").prop("disabled", true);
 
   $("#smtpForm").on("submit", function (event) {
     event.preventDefault();
@@ -48,7 +45,7 @@ $(document).ready(function () {
           Swal.fire({
             icon: "error",
             title: "Error",
-            text: "Hubo un problema al intentar conectar con el servidor SMTP. Por favor, revisa los datos e inténtalo de nuevo. come azucar",
+            text: "Hubo un problema al intentar conectar con el servidor SMTP. Por favor, revisa los datos e inténtalo de nuevo.",
           });
         }
       },
@@ -58,7 +55,7 @@ $(document).ready(function () {
         Swal.fire({
           icon: "error",
           title: "Error",
-          text: "Hubo un problema al intentar conectar con el servidor SMTP. Por favor, revisa los datos e inténtalo de nuevo. mmgv XD",
+          text: "Hubo un problema al intentar conectar con el servidor SMTP. Por favor, revisa los datos e inténtalo de nuevo.",
         });
       },
     });
@@ -112,7 +109,7 @@ $(document).ready(function () {
               confirmButtonText: "Aceptar",
             }).then((result) => {
               if (result.isConfirmed) {
-                window.location.href = `sendEmail.php?access_token=${accessToken}`;
+                window.location.href = `sendEmail.php2?access_token=${accessToken}`;
               }
             });
           },
