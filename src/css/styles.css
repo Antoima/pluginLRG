@@ -18,3 +18,20 @@ body:not(.loading) #loading {
   text-align: center;
   padding-top: 200px;
 }
+/* Estilos para el botón de Google */
+.btn-google {
+  background-color: #4285f4;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-google:hover {
+  background-color: #357ae8;
+  color: white;
+}
+
+.btn-google .spinner-border {
+  margin-left: 10px;
+}
