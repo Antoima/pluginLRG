@@ -1,6 +1,16 @@
 <?php
 // Cargar la configuración desde el archivo config.php
 $config = require '/home/dh_292vea/configuracion/config.php';
+
+// Verificación de integridad del archivo index.php
+$hashEsperado = $config['file_hashes']['index.php']; // Obtener el hash desde la configuración
+$hashActual = base64_encode(hash_file('sha512', __FILE__, true));
+
+if ($hashActual !== $hashEsperado) {
+    die("¡Advertencia! El archivo index.php ha sido modificado. Acceso denegado.");
+}
+
+// Continuar con la carga normal de la página
 $googleClientId = $config['google_client_id'];
 ?>
 <!DOCTYPE html>
