@@ -1,7 +1,10 @@
 <?php
+$config = require '/home/dh_292vea/configuracion/config.php';
+$secretKey = $config['recaptcha_secret_key'];
+// $config = include('/home/dh_292vea/configuracion/config.php');
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $recaptchaResponse = $_POST['recaptchaResponse'];
-    $secretKey = '6Lckg9UqAAAAAIhUzJRTiINsZZ-wiUxDgxII7-jr';
 
     $response = file_get_contents("https://www.google.com/recaptcha/api/siteverify?secret=$secretKey&response=$recaptchaResponse");
     $responseKeys = json_decode($response, true);
