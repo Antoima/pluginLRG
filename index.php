@@ -2,21 +2,38 @@
 // Cargar la configuración desde el archivo config.php
 $config = require '/home/dh_292vea/configuracion/config.php';
 
-// Verificación de integridad del archivo index.php
-$hashEsperado = $config['file_hashes']['index.php']; // Obtener el hash desde la configuración
-$hashActual = base64_encode(hash_file('sha512', __FILE__, true));
+// Rutas para la verificación de firma digital
+$ruta_clave_publica = '/home/dh_292vea/claves_publicas/public_key.pem'; // Ruta a la clave pública
+$ruta_firma = '/home/dh_292vea/firmas/firma.bin'; // Ruta a la firma generada
 
-// Depuración: Mostrar los hashes en la consola
-echo "<script>console.log('Hash esperado:', " . json_encode($hashEsperado) . ");</script>";
-echo "<script>console.log('Hash actual:', " . json_encode($hashActual) . ");</script>";
+// Cargar la clave pública
+$clave_publica = openssl_pkey_get_public(file_get_contents($ruta_clave_publica));
+if (!$clave_publica) {
+    die("Error al cargar la clave pública.");
+}
 
-if ($hashActual !== $hashEsperado) {
-    // Depuración: Mostrar un mensaje de error en la consola
-    echo "<script>console.error('¡Advertencia! El archivo index.php ha sido modificado. Acceso denegado.');</script>";
-    die("¡Advertencia! El archivo index.php ha sido modificado. Acceso denegado.");
+// Cargar la firma
+$firma = file_get_contents($ruta_firma);
+if (!$firma) {
+    die("Error al cargar la firma.");
+}
+
+// Cargar el contenido del archivo actual
+$datos = file_get_contents(__FILE__);
+if (!$datos) {
+    die("Error al cargar el archivo.");
+}
+
+// Verificar la firma
+$resultado = openssl_verify($datos, $firma, $clave_publica, OPENSSL_ALGO_SHA256);
+
+if ($resultado === 1) {
+    echo "<script>console.log('La firma es válida. El archivo no ha sido modificado.');</script>";
+} elseif ($resultado === 0) {
+    echo "<script>console.error('¡Advertencia! El archivo ha sido modificado. Acceso denegado.');</script>";
+    die("¡Advertencia! El archivo ha sido modificado. Acceso denegado.");
 } else {
-    // Depuración: Mostrar un mensaje de éxito en la consola
-    echo "<script>console.log('La integridad del archivo index.php ha sido verificada correctamente.');</script>";
+    die("Error al verificar la firma.");
 }
 
 // Continuar con la carga normal de la página
