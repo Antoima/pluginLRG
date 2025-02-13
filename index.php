@@ -52,11 +52,11 @@
         </div>
         <div class="form-group">
           <label for="usuario">Usuario:</label>
-          <input type="email" class="form-control" id="usuario" name="usuario" required />
+          <input type="email" class="form-control" id="usuario" name="usuario" required disabled />
         </div>
         <div class="form-group">
           <label for="contraseña">Contraseña:</label>
-          <input type="password" class="form-control" id="contraseña" name="contraseña" required />
+          <input type="password" class="form-control" id="contraseña" name="contraseña" required disabled />
         </div>
         <!-- <button type="submit" id="submitBtn" class="btn btn-primary btn-block">Lo quiero y lo tengo</button> -->
         <button type="button" id="checkGoogleConnection" class="btn btn-secondary btn-block mt-2">Comprobar Conexión con Google</button>
