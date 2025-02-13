@@ -58,7 +58,7 @@
           <label for="contraseña">Contraseña:</label>
           <input type="password" class="form-control" id="contraseña" name="contraseña" required />
         </div>
-        <button type="submit" id="submitBtn" class="btn btn-primary btn-block">Lo quiero y lo tengo</button>
+        <!-- <button type="submit" id="submitBtn" class="btn btn-primary btn-block">Lo quiero y lo tengo</button> -->
         <button type="button" id="checkGoogleConnection" class="btn btn-secondary btn-block mt-2">Comprobar Conexión con Google</button>
       </form>
     </div>
