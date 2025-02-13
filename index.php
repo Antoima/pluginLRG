@@ -1,3 +1,8 @@
+<?php
+// Cargar la configuración desde el archivo config.php
+$config = require '/home/dh_292vea/configuracion/config.php';
+$googleClientId = $config['google_client_id'];
+?>
 <!DOCTYPE html>
 <html lang="es">
   <head>
