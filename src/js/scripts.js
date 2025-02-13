@@ -105,8 +105,53 @@ $(document).ready(function () {
         // Almacenar el token en localStorage
         localStorage.setItem("access_token", accessToken);
 
-        // Redirigir sin el token en la URL
-        window.location.href = "sendEmail.php";
+        // Obtener información del usuario de Google
+        $.ajax({
+          url: "https://www.googleapis.com/oauth2/v1/userinfo?alt=json",
+          type: "GET",
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+          success: function (response) {
+            console.log("Información del usuario:", response);
+
+            // Mostrar notificación con los datos de Google (sin el token)
+            Swal.fire({
+              title: "Conexión exitosa",
+              html: `
+                <p><strong>Foto de perfil:</strong> <img src="${
+                  response.picture
+                }" alt="Foto de perfil" style="border-radius: 50%; width: 50px; height: 50px;"></p>
+                <p><strong>Correo electrónico:</strong> ${response.email}</p>
+                <p><strong>Correo verificado:</strong> ${
+                  response.verified_email ? "Sí" : "No"
+                }</p>
+              `,
+              icon: "success",
+              confirmButtonText: "Continuar",
+            }).then((result) => {
+              if (result.isConfirmed) {
+                // Redirigir sin el token en la URL
+                window.location.href = "sendEmail.php";
+              }
+            });
+          },
+          error: function (xhr, status, error) {
+            console.error(
+              "Error al obtener la información del usuario:",
+              error
+            );
+            Swal.fire({
+              title: "Error",
+              text: "Hubo un problema al obtener la información del usuario.",
+              icon: "error",
+              confirmButtonText: "Aceptar",
+            }).then(() => {
+              // Redirigir incluso si hay un error
+              window.location.href = "sendEmail.php";
+            });
+          },
+        });
       }
     }
   }
