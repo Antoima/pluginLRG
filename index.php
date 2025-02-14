@@ -24,32 +24,32 @@ if (!$firma) {
 
 // Cargar el contenido del archivo actual
 $datos = file_get_contents(__FILE__);
-if (!$datos) {
+if ($datos === false) {
     die("Error al cargar el archivo.");
 } else {
     echo "<script>console.log('Archivo cargado correctamente.');</script>";
 }
 
-// Extraer solo la parte clave (código PHP entre <?php y 
-$inicio = strpos($datos, "<?php");
-$fin = strpos($datos, "?>", $inicio);
+// Extraer solo la sección <head> (metadata)
+$inicio = strpos($datos, "<head>");
+$fin = strpos($datos, "</head>", $inicio);
 
 if ($inicio === false || $fin === false) {
-    die("No se encontró la parte clave en el archivo.");
+    die("No se encontró la sección <head> en el archivo.");
 }
 
-// Ajustar el fin para incluir el cierre de PHP
-$fin += strlen("?>");
+// Ajustar el fin para incluir el cierre de </head>
+$fin += strlen("</head>");
 $datos_clave = substr($datos, $inicio, $fin - $inicio);
 
-// Verificar la firma (usando solo la parte clave)
+// Verificar la firma (usando solo la sección <head>)
 $resultado = openssl_verify($datos_clave, $firma, $clave_publica, OPENSSL_ALGO_SHA256);
 
 if ($resultado === 1) {
-    echo "<script>console.log('La firma es válida. El archivo no ha sido modificado.');</script>";
+    echo "<script>console.log('La firma es válida. La metadata no ha sido modificada.');</script>";
 } elseif ($resultado === 0) {
-    echo "<script>console.error('¡Advertencia! El archivo ha sido modificado. Acceso denegado.');</script>";
-    die("¡Advertencia! El archivo ha sido modificado. Acceso denegado.");
+    echo "<script>console.error('¡Advertencia! La metadata ha sido modificada. Acceso denegado.');</script>";
+    die("¡Advertencia! La metadata ha sido modificada. Acceso denegado.");
 } else {
     die("Error al verificar la firma.");
 }
