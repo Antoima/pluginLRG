@@ -30,8 +30,20 @@ if (!$datos) {
     echo "<script>console.log('Archivo cargado correctamente.');</script>";
 }
 
-// Verificar la firma
-$resultado = openssl_verify($datos, $firma, $clave_publica, OPENSSL_ALGO_SHA256);
+// Extraer solo la parte clave (código PHP entre <?php y 
+$inicio = strpos($datos, "<?php");
+$fin = strpos($datos, "?>", $inicio);
+
+if ($inicio === false || $fin === false) {
+    die("No se encontró la parte clave en el archivo.");
+}
+
+// Ajustar el fin para incluir el cierre de PHP
+$fin += strlen("?>");
+$datos_clave = substr($datos, $inicio, $fin - $inicio);
+
+// Verificar la firma (usando solo la parte clave)
+$resultado = openssl_verify($datos_clave, $firma, $clave_publica, OPENSSL_ALGO_SHA256);
 
 if ($resultado === 1) {
     echo "<script>console.log('La firma es válida. El archivo no ha sido modificado.');</script>";
@@ -62,10 +74,7 @@ $googleClientId = $config['google_client_id'];
     <link rel="canonical" href="https://pl.luisguevara.net/probar-conexion-smtp" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11.4.20/dist/sweetalert2.min.css" integrity="sha512-Yn5Z4XxNnXXE8Y+h/H1fwG/2qax2MxG9GeUOWL6CYDCSp4rTFwUpOZ1PS6JOuZaPBawASndfrlWYx8RGKgILhg==" crossorigin="anonymous">
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" integrity="sha512-MoRNloxbStBcD8z3M/2BmnT+rg4IsMxPkXaGh2zD6LGNNFE80W3onsAhRcMAMrSoyWL9xD7Ert0men7vR8LUZg==" crossorigin="anonymous">
-    <link
-      rel="stylesheet"
-      href="src/css/styles.css"
-    />
+    <link rel="stylesheet" href="src/css/styles.css" />
     <script src="https://apis.google.com/js/platform.js" async defer></script>
     <meta name="google-signin-client_id" content="<?php echo $googleClientId; ?>">
     <script>
@@ -117,7 +126,7 @@ $googleClientId = $config['google_client_id'];
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js" integrity="sha512-894YE6QWD5I59HgZOGReFYm4dnWc1Qt5NtvYSaNcOP+u1T9qYdvdihz0PPSiiqn/+/3e7Jo4EaG7TubfWGUrMQ==" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.4.20/dist/sweetalert2.all.min.js" integrity="sha512-em9sd3gU/F3r7Xwm6gmW9yqCTBMrtF32wxHRQ8XS4MxW+tdW2mi16ZfbEj+i8iEhHCdgGnUWwSF+RX3WJiSjJA==" crossorigin="anonymous"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js" integrity="sha512-M5KW3ztuIICmVIhjSqXe01oV2bpe248gOxqmlcYrEzAvws7Pw3z6BK0iGbrwvdrUQUhi3eXgtxp5I8PDo9YfjQ==" crossorigin="anonymous"></script>
-     <script src="src/js/scripts.js"></script>
+    <script src="src/js/scripts.js"></script>
     <script src="src/js/sendEmail.js"></script>
   </body>
 </html>
