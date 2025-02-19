@@ -1,137 +1,94 @@
 <?php
 session_start();
 
-// Verificar si el usuario está autenticado
+// Verificar autenticación
 if (!isset($_SESSION['access_token'])) {
     echo json_encode(["status" => "error", "message" => "No autenticado."]);
     exit();
 }
 
-// Obtener los datos del formulario
-$sourceEmail = $_POST['sourceEmail'] ?? '';
-$destinationEmail = $_POST['destinationEmail'] ?? '';
-$accessToken = $_POST['accessToken'] ?? '';
+// Obtener tokens
+$sourceToken = $_POST['accessToken'];
+$destinationToken = $_POST['destinationAccessToken'] ?? null;
+$sourceEmail = $_POST['sourceEmail'];
+$destinationEmail = $_POST['destinationEmail'];
 
+// Validar
 if (empty($sourceEmail)) {
-    echo json_encode(["status" => "error", "message" => "La cuenta de origen es requerida."]);
+    echo json_encode(["status" => "error", "message" => "Cuenta de origen requerida."]);
     exit();
 }
 
-// Lógica para realizar la copia de seguridad y migración
 try {
-    // 1. Obtener los correos de la cuenta de origen
-    $emails = getEmails($accessToken);
+    // 1. Obtener correos de origen
+    $emails = getEmails($sourceToken);
 
-    // 2. Exportar los correos a un archivo de respaldo
-    exportEmailsToMbox($accessToken, $emails);
+    // 2. Exportar a .mbox
+    exportEmailsToMbox($sourceToken, $emails);
 
-    // 3. Migrar los correos a la cuenta de destino (si se proporciona)
-    if (!empty($destinationEmail)) {
-        migrateEmails($accessToken, $emails, $destinationEmail);
+    // 3. Migrar a destino (si hay token)
+    if ($destinationEmail && $destinationToken) {
+        migrateEmails($sourceToken, $destinationToken, $emails);
     }
 
-    // Respuesta exitosa
-    echo json_encode([
-        "status" => "success",
-        "message" => "Copia de seguridad y migración completadas correctamente.",
-    ]);
+    echo json_encode(["status" => "success", "message" => "Proceso completado."]);
+
 } catch (Exception $e) {
-    echo json_encode([
-        "status" => "error",
-        "message" => "Error: " . $e->getMessage(),
-    ]);
+    echo json_encode(["status" => "error", "message" => $e->getMessage()]);
 }
 
-// Función para obtener los correos
-function getEmails($accessToken, $userId = 'me') {
-    $url = "https://www.googleapis.com/gmail/v1/users/{$userId}/messages";
-    $headers = [
-        "Authorization: Bearer {$accessToken}",
-        "Accept: application/json",
-    ];
-
-    $ch = curl_init();
-    curl_setopt($ch, CURLOPT_URL, $url);
-    curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+// Funciones
+function getEmails($token) {
+    $url = "https://www.googleapis.com/gmail/v1/users/me/messages";
+    $ch = curl_init($url);
+    curl_setopt($ch, CURLOPT_HTTPHEADER, ["Authorization: Bearer $token"]);
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-    $response = curl_exec($ch);
+    $response = json_decode(curl_exec($ch), true);
     curl_close($ch);
-
-    $emails = json_decode($response, true);
-    return $emails['messages'] ?? [];
+    return $response['messages'] ?? [];
 }
 
-// Función para exportar los correos a un archivo .mbox
-function exportEmailsToMbox($accessToken, $emails, $userId = 'me') {
+function exportEmailsToMbox($token, $emails) {
     $mboxContent = "";
-
     foreach ($emails as $email) {
         $messageId = $email['id'];
-        $url = "https://www.googleapis.com/gmail/v1/users/{$userId}/messages/{$messageId}?format=raw";
-        $headers = [
-            "Authorization: Bearer {$accessToken}",
-            "Accept: application/json",
-        ];
-
-        $ch = curl_init();
-        curl_setopt($ch, CURLOPT_URL, $url);
-        curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+        $url = "https://www.googleapis.com/gmail/v1/users/me/messages/$messageId?format=raw";
+        $ch = curl_init($url);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, ["Authorization: Bearer $token"]);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        $response = curl_exec($ch);
+        $emailData = json_decode(curl_exec($ch), true);
         curl_close($ch);
-
-        $emailData = json_decode($response, true);
-        $rawEmail = base64_decode(str_replace(['-', '_'], ['+', '/'], $emailData['raw']));
-
-        $mboxContent .= "From - " . date('r') . "\n";
-        $mboxContent .= $rawEmail . "\n\n";
+        $rawEmail = base64_decode(strtr($emailData['raw'], '-_', '+/'));
+        $mboxContent .= "From - " . date('r') . "\n" . $rawEmail . "\n\n";
     }
-
     file_put_contents("backup.mbox", $mboxContent);
 }
 
-// Función para migrar los correos a la cuenta de destino
-function migrateEmails($accessToken, $emails, $destinationEmail, $userId = 'me') {
+function migrateEmails($sourceToken, $destinationToken, $emails) {
     foreach ($emails as $email) {
         $messageId = $email['id'];
-        $url = "https://www.googleapis.com/gmail/v1/users/{$userId}/messages/{$messageId}?format=raw";
-        $headers = [
-            "Authorization: Bearer {$accessToken}",
-            "Accept: application/json",
-        ];
-
-        $ch = curl_init();
-        curl_setopt($ch, CURLOPT_URL, $url);
-        curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+        $url = "https://www.googleapis.com/gmail/v1/users/me/messages/$messageId?format=raw";
+        $ch = curl_init($url);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, ["Authorization: Bearer $sourceToken"]);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        $response = curl_exec($ch);
+        $emailData = json_decode(curl_exec($ch), true);
         curl_close($ch);
+        $rawEmail = base64_decode(strtr($emailData['raw'], '-_', '+/'));
 
-        $emailData = json_decode($response, true);
-        $rawEmail = base64_decode(str_replace(['-', '_'], ['+', '/'], $emailData['raw']));
-
-        $sendUrl = "https://www.googleapis.com/gmail/v1/users/me/messages/send";
-        $sendHeaders = [
-            "Authorization: Bearer {$accessToken}",
-            "Content-Type: application/json",
-        ];
-
-        $sendData = [
-            'raw' => base64_encode($rawEmail),
-        ];
-
-        $ch = curl_init();
-        curl_setopt($ch, CURLOPT_URL, $sendUrl);
-        curl_setopt($ch, CURLOPT_HTTPHEADER, $sendHeaders);
+        // Enviar con token de destino
+        $ch = curl_init("https://www.googleapis.com/gmail/v1/users/me/messages/send");
+        curl_setopt($ch, CURLOPT_HTTPHEADER, [
+            "Authorization: Bearer $destinationToken",
+            "Content-Type: application/json"
+        ]);
         curl_setopt($ch, CURLOPT_POST, true);
-        curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($sendData));
+        curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode(["raw" => base64_encode($rawEmail)]));
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        $sendResponse = curl_exec($ch);
+        $response = json_decode(curl_exec($ch), true);
         curl_close($ch);
 
-        $sendResult = json_decode($sendResponse, true);
-        if (isset($sendResult['error'])) {
-            throw new Exception("Error al enviar el correo: " . $sendResult['error']['message']);
+        if (isset($response['error'])) {
+            throw new Exception("Error al migrar correo: " . $response['error']['message']);
         }
     }
 }
