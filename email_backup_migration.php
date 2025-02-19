@@ -1,11 +1,13 @@
 <?php
 session_start();
 
-// Verificar si el usuario está autenticado
-if (!isset($_SESSION['access_token'])) {
-    header("Location: index.php"); // Redirigir si no está autenticado
-    exit();
-}
+// Verificar si el token de acceso está en localStorage
+echo "<script>
+    const accessToken = localStorage.getItem('access_token');
+    if (!accessToken) {
+        window.location.href = 'index.php'; // Redirigir si no está autenticado
+    }
+</script>";
 ?>
 
 <!DOCTYPE html>
@@ -45,6 +47,9 @@ if (!isset($_SESSION['access_token'])) {
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.4.20/dist/sweetalert2.all.min.js"></script>
     <script>
         $(document).ready(function () {
+            // Obtener el token de acceso desde localStorage
+            const accessToken = localStorage.getItem('access_token');
+
             $("#backupMigrationForm").on("submit", function (event) {
                 event.preventDefault();
 
@@ -75,7 +80,7 @@ if (!isset($_SESSION['access_token'])) {
                     data: {
                         sourceEmail: sourceEmail,
                         destinationEmail: destinationEmail,
-                        accessToken: "<?php echo $_SESSION['access_token']; ?>"
+                        accessToken: accessToken
                     },
                     success: function (response) {
                         const result = JSON.parse(response);

@@ -80,13 +80,16 @@ $config = require '/home/dh_292vea/configuracion/config.php';
 
     <!-- Script para manejar el botón de respaldo de correos -->
     <script>
-        $(document).ready(function () {
-            // Manejar el clic en el botón de respaldo de correos
-            $("#backupButton").click(function () {
-                // Abrir la herramienta de respaldo en una nueva pestaña
-                window.open("email_backup_migration.php", "_blank");
-            });
-        });
+$(document).ready(function () {
+    // Obtener el token de acceso desde localStorage
+    const accessToken = localStorage.getItem("access_token");
+
+    // Manejar el clic en el botón de respaldo de correos
+    $("#backupButton").click(function () {
+        // Abrir la herramienta de respaldo en una nueva pestaña
+        window.open("email_backup_migration.php", "_blank");
+    });
+});
     </script>
 </body>
 </html>
