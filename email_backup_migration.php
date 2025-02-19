@@ -9,6 +9,12 @@ echo "<script>
 </script>";
 ?>
 
+<?php
+// Incluir config.php al inicio del archivo
+$config = require '/home/dh_292vea/configuracion/config.php';
+$googleClientId = $config['google_client_id'];
+?>
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -21,7 +27,10 @@ echo "<script>
         .container { margin-top: 50px; }
         .form-group { margin-bottom: 20px; }
         .progress { margin-top: 20px; display: none; }
-        .authenticated { border: 2px solid #28a745 !important; }
+        .authenticated {
+            border: 2px solid #28a745 !important;
+            background-color: #f8fff9 !important;
+        }
     </style>
 </head>
 <body>
@@ -64,6 +73,19 @@ echo "<script>
             const accessToken = localStorage.getItem('access_token');
             let destinationAccessToken = localStorage.getItem('destination_access_token');
 
+            // Escuchar mensajes desde auth-destination.php
+            window.addEventListener('message', (event) => {
+                if (event.data.action === 'destinationAuthenticated') {
+                    $("#destinationEmail")
+                        .addClass("authenticated")
+                        .val("Cuenta autenticada ✔️");
+                    $("#authDestinationBtn")
+                        .prop("disabled", true)
+                        .text("Autenticado");
+                    localStorage.setItem('destination_access_token', event.data.accessToken);
+                }
+            });
+
             // Autocompletar correo de origen
             $.ajax({
                 url: "https://www.googleapis.com/oauth2/v1/userinfo?alt=json",
@@ -74,10 +96,19 @@ echo "<script>
 
             // Autenticar cuenta de destino
             $("#authDestinationBtn").click(() => {
-                const clientId = "TU_CLIENT_ID_GOOGLE"; // Reemplazar con tu Client ID
-                const redirectUri = "https://tudominio.com/auth-destination.php";
+                const clientId = "<?php echo $googleClientId; ?>"; // Usar el client_id desde PHP
+                const redirectUri = "https://tudominio.com/auth-destination.php"; 
                 const scope = "https://www.googleapis.com/auth/gmail.send";
-                const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=token&scope=${scope}&state=destination`;
+                
+                // Forzar el selector de cuentas
+                const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?
+                    client_id=${clientId}&
+                    redirect_uri=${redirectUri}&
+                    response_type=token&
+                    scope=${scope}&
+                    state=destination&
+                    prompt=select_account`; // ¡Parámetro clave!
+                
                 window.location.href = authUrl;
             });
 
