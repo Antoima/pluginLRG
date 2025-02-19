@@ -6,6 +6,7 @@ $(document).ready(function () {
     "mail.smtp2go.com": ["2525 (TLS)", "587 (TLS)", "465 (SSL)"],
   };
 
+  // Actualizar los puertos disponibles según el host seleccionado
   function actualizarPuertos() {
     const hostSeleccionado = $("#host").val();
     const puertos = puertosPorHost[hostSeleccionado] || [];
@@ -23,6 +24,7 @@ $(document).ready(function () {
   $("#usuario").prop("disabled", true);
   $("#contraseña").prop("disabled", true);
 
+  // Enviar formulario SMTP
   $("#smtpForm").on("submit", function (event) {
     event.preventDefault();
 
@@ -76,6 +78,7 @@ $(document).ready(function () {
     });
   });
 
+  // Autenticación con Google OAuth 2.0
   $("#checkGoogleConnection").click(function () {
     $("#googleButtonText").addClass("d-none");
     $("#googleButtonSpinner").removeClass("d-none");
@@ -96,15 +99,26 @@ $(document).ready(function () {
     window.location.href = authUrl;
   });
 
+  // Manejar la redirección de OAuth
   function handleOAuthRedirect() {
     const hash = window.location.hash;
     if (hash) {
       const params = new URLSearchParams(hash.substring(1));
       const accessToken = params.get("access_token");
-      if (accessToken) {
-        // Almacenar el token en localStorage
-        localStorage.setItem("access_token", accessToken);
+      const error = params.get("error");
 
+      if (error) {
+        Swal.fire({
+          title: "Error de autenticación",
+          text: "No se pudo autenticar con Google. Por favor, inténtalo de nuevo.",
+          icon: "error",
+          confirmButtonText: "Aceptar",
+        });
+        return;
+      }
+
+      if (accessToken) {
+        localStorage.setItem("access_token", accessToken);
         // Obtener información del usuario de Google
         $.ajax({
           url: "https://www.googleapis.com/oauth2/v1/userinfo?alt=json",
@@ -115,7 +129,6 @@ $(document).ready(function () {
           success: function (response) {
             console.log("Información del usuario:", response);
 
-            // Mostrar notificación con los datos de Google (sin el token)
             Swal.fire({
               title: "Conexión exitosa",
               html: `
@@ -131,7 +144,6 @@ $(document).ready(function () {
               confirmButtonText: "Continuar",
             }).then((result) => {
               if (result.isConfirmed) {
-                // Redirigir sin el token en la URL
                 window.location.href = "sendEmail.php";
               }
             });
@@ -147,7 +159,6 @@ $(document).ready(function () {
               icon: "error",
               confirmButtonText: "Aceptar",
             }).then(() => {
-              // Redirigir incluso si hay un error
               window.location.href = "sendEmail.php";
             });
           },
@@ -156,5 +167,56 @@ $(document).ready(function () {
     }
   }
 
+  // Renovar el token de acceso si ha expirado
+  async function refreshAccessToken(refreshToken) {
+    const response = await fetch("https://oauth2.googleapis.com/token", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+      body: new URLSearchParams({
+        client_id: googleClientId,
+        client_secret: "TU_CLIENT_SECRET", // Reemplaza con tu client_secret
+        refresh_token: refreshToken,
+        grant_type: "refresh_token",
+      }),
+    });
+
+    const data = await response.json();
+    return data.access_token;
+  }
+
+  // Obtener un token de acceso válido
+  async function getValidAccessToken() {
+    let accessToken = localStorage.getItem("access_token");
+    const refreshToken = localStorage.getItem("refresh_token");
+
+    if (!accessToken) {
+      throw new Error("No hay token de acceso disponible.");
+    }
+
+    // Verificar si el token ha expirado (puedes usar una librería como jwt-decode para esto)
+    const tokenExpired = true; // Cambia esto por una verificación real
+    if (tokenExpired) {
+      accessToken = await refreshAccessToken(refreshToken);
+      localStorage.setItem("access_token", accessToken);
+    }
+
+    return accessToken;
+  }
+
+  // Limpiar localStorage al cerrar sesión
+  function clearLocalStorage() {
+    localStorage.removeItem("access_token");
+    localStorage.removeItem("refresh_token");
+  }
+
+  // Ejemplo de uso al cerrar sesión
+  $("#logoutButton").click(function () {
+    clearLocalStorage();
+    window.location.href = "logout.php";
+  });
+
+  // Manejar la redirección de OAuth al cargar la página
   handleOAuthRedirect();
 });
