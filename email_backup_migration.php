@@ -86,18 +86,73 @@ $googleClientId = $config['google_client_id'];
                 }
             });
 
+            // Obtener el correo del usuario autenticado
+            function getUserInfo(accessToken) {
+                return $.ajax({
+                    url: "https://www.googleapis.com/oauth2/v1/userinfo?alt=json",
+                    type: "GET",
+                    headers: {
+                        Authorization: `Bearer ${accessToken}`,
+                    },
+                });
+            }
+
+            // Verificar y renovar el token si es necesario
+            async function getValidAccessToken() {
+                let accessToken = localStorage.getItem('access_token');
+                const refreshToken = localStorage.getItem('refresh_token');
+
+                if (!accessToken) {
+                    throw new Error("No hay token de acceso disponible.");
+                }
+
+                // Verificar si el token es válido
+                try {
+                    await getUserInfo(accessToken);
+                    return accessToken;
+                } catch (error) {
+                    // Si el token ha expirado, renovarlo
+                    if (refreshToken) {
+                        const response = await fetch("https://oauth2.googleapis.com/token", {
+                            method: "POST",
+                            headers: {
+                                "Content-Type": "application/x-www-form-urlencoded",
+                            },
+                            body: new URLSearchParams({
+                                client_id: "<?php echo $googleClientId; ?>",
+                                client_secret: "<?php echo $config['google_client_secret']; ?>",
+                                refresh_token: refreshToken,
+                                grant_type: "refresh_token",
+                            }),
+                        });
+
+                        const data = await response.json();
+                        accessToken = data.access_token;
+                        localStorage.setItem('access_token', accessToken);
+                        return accessToken;
+                    } else {
+                        throw new Error("El token ha expirado y no hay refresh_token disponible.");
+                    }
+                }
+            }
+
             // Autocompletar correo de origen
-            $.ajax({
-                url: "https://www.googleapis.com/oauth2/v1/userinfo?alt=json",
-                headers: { Authorization: `Bearer ${accessToken}` },
-                success: (response) => $("#sourceEmail").val(response.email),
-                error: () => Swal.fire("Error", "No se pudo obtener la información del usuario.", "error")
-            });
+            getValidAccessToken()
+                .then((accessToken) => {
+                    return getUserInfo(accessToken);
+                })
+                .then((response) => {
+                    $("#sourceEmail").val(response.email);
+                })
+                .catch((error) => {
+                    Swal.fire("Error", "No se pudo obtener la información del usuario.", "error");
+                    console.error("Error:", error);
+                });
 
             // Autenticar cuenta de destino
             $("#authDestinationBtn").click(() => {
                 const clientId = "<?php echo $googleClientId; ?>"; // Usar el client_id desde PHP
-                const redirectUri = encodeURIComponent("https://pl.luisguevara.net/auth-destination.php"); // Codificar la URL
+                const redirectUri = encodeURIComponent("https://tudominio.com/auth-destination.php"); // Codificar la URL
                 const scope = "https://www.googleapis.com/auth/gmail.send";
                 
                 // Construir la URL sin saltos de línea ni espacios
