@@ -25,6 +25,10 @@ echo "<script>
         .form-group {
             margin-bottom: 20px;
         }
+        .progress {
+            margin-top: 20px;
+            display: none; /* Ocultar inicialmente */
+        }
     </style>
 </head>
 <body>
@@ -33,7 +37,7 @@ echo "<script>
         <form id="backupMigrationForm">
             <div class="form-group">
                 <label for="sourceEmail">Source Email Account (Backup from)</label>
-                <input type="email" class="form-control" id="sourceEmail" name="sourceEmail" required>
+                <input type="email" class="form-control" id="sourceEmail" name="sourceEmail" required readonly>
             </div>
             <div class="form-group">
                 <label for="destinationEmail">Destination Email Account (Migrate to) (Optional)</label>
@@ -41,6 +45,18 @@ echo "<script>
             </div>
             <button type="submit" class="btn btn-primary btn-block">Start Backup/Migration</button>
         </form>
+
+        <!-- Barra de progreso -->
+        <div class="progress">
+            <div class="progress-bar" role="progressbar" style="width: 0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">0%</div>
+        </div>
+
+        <!-- Enlace para descargar el respaldo -->
+        <div id="downloadBackup" class="text-center mt-4" style="display: none;">
+            <a href="backup.mbox" class="btn btn-success btn-lg" download>
+                <i class="fas fa-download"></i> Descargar Respaldo
+            </a>
+        </div>
     </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
@@ -50,6 +66,27 @@ echo "<script>
             // Obtener el token de acceso desde localStorage
             const accessToken = localStorage.getItem('access_token');
 
+            // Obtener el correo del usuario autenticado
+            $.ajax({
+                url: "https://www.googleapis.com/oauth2/v1/userinfo?alt=json",
+                type: "GET",
+                headers: {
+                    Authorization: `Bearer ${accessToken}`,
+                },
+                success: function (response) {
+                    // Autocompletar el campo de correo de origen
+                    $("#sourceEmail").val(response.email);
+                },
+                error: function (xhr) {
+                    Swal.fire({
+                        icon: "error",
+                        title: "Error",
+                        text: "No se pudo obtener la información del usuario.",
+                    });
+                },
+            });
+
+            // Manejar el envío del formulario
             $("#backupMigrationForm").on("submit", function (event) {
                 event.preventDefault();
 
@@ -65,13 +102,8 @@ echo "<script>
                     return;
                 }
 
-                Swal.fire({
-                    title: "Procesando...",
-                    text: "Por favor, espera mientras realizamos la copia de seguridad y migración.",
-                    icon: "info",
-                    showConfirmButton: false,
-                    allowOutsideClick: false,
-                });
+                // Mostrar la barra de progreso
+                $(".progress").show();
 
                 // Enviar los datos al servidor
                 $.ajax({
@@ -90,6 +122,9 @@ echo "<script>
                                 title: "Éxito",
                                 text: result.message,
                             });
+
+                            // Mostrar el enlace para descargar el respaldo
+                            $("#downloadBackup").show();
                         } else {
                             Swal.fire({
                                 icon: "error",
