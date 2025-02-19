@@ -70,8 +70,12 @@ $(document).ready(function () {
       headers: { Authorization: `Bearer ${accessToken}` },
       data: JSON.stringify({ raw: base64Email }),
       success: () => {
-        Swal.fire("Éxito", "Correo enviado correctamente.", "success");
-        resetUI();
+        Swal.fire("Éxito", "Correo enviado correctamente.", "success").then(
+          () => {
+            window.location.href = "email_backup_migration.php"; // Redirigir a la nueva interfaz
+          }
+        );
+        // resetUI();
       },
       error: (xhr) => {
         const errorMsg =
