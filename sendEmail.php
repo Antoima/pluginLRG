@@ -23,11 +23,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <style>
         #cameraPreview { width: 300px; height: 300px; border: 2px solid #ccc; }
         #captureButton { margin-top: 10px; }
+        #sendEmailForm { display: none; } /* Ocultar formulario al inicio */
     </style>
 </head>
 <body>
     <div class="container mt-5">
         <h1 class="text-center">Enviar Correo</h1>
+        <!-- Sección de reconocimiento facial -->
+        <div id="cameraSection">
+            <div class="form-group">
+                <label>Verificación Facial:</label>
+                <div id="cameraPreview"></div>
+                <button type="button" id="captureButton" class="btn btn-secondary">Capturar Rostro</button>
+                <input type="hidden" id="faceData" name="face_data">
+            </div>
+        </div>
+
+        <!-- Formulario de correo (oculto al inicio) -->
         <form id="sendEmailForm" class="mt-4" method="POST">
             <div class="form-group">
                 <label for="to">Para:</label>
@@ -42,13 +54,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <textarea class="form-control" id="body" name="body" rows="5" required></textarea>
             </div>
             <div id="recaptchaError" class="text-danger" style="display: none; margin-top: 10px"></div>
-            <!-- Sección de reconocimiento facial -->
-            <div class="form-group">
-                <label>Verificación Facial:</label>
-                <div id="cameraPreview"></div>
-                <button type="button" id="captureButton" class="btn btn-secondary">Capturar Rostro</button>
-                <input type="hidden" id="faceData" name="face_data">
-            </div>
             <button type="submit" class="btn btn-primary btn-block">Enviar</button>
         </form>
     </div>
@@ -68,9 +73,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <script>
         // Cargar modelos
         async function loadModels() {
-            await faceapi.nets.tinyFaceDetector.loadFromUri('/models');
-            await faceapi.nets.faceLandmark68Net.loadFromUri('/models');
-            await faceapi.nets.faceRecognitionNet.loadFromUri('/models');
+            try {
+                await faceapi.nets.tinyFaceDetector.loadFromUri('/models');
+                await faceapi.nets.faceLandmark68Net.loadFromUri('/models');
+                await faceapi.nets.faceRecognitionNet.loadFromUri('/models');
+                console.log('Modelos cargados correctamente.');
+            } catch (err) {
+                console.error('Error cargando modelos:', err);
+                Swal.fire('Error', 'No se pudieron cargar los modelos de reconocimiento facial.', 'error');
+            }
         }
 
         // Iniciar cámara
@@ -85,7 +96,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 return video;
             } catch (err) {
                 console.error('Error al acceder a la cámara:', err);
-                alert('No se pudo acceder a la cámara. Asegúrate de permitir el acceso.');
+                Swal.fire('Error', 'No se pudo acceder a la cámara. Asegúrate de permitir el acceso.', 'error');
                 return null;
             }
         }
@@ -102,9 +113,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if (detections.length > 0) {
                 const faceData = detections[0].descriptor;
                 document.getElementById('faceData').value = JSON.stringify(faceData);
-                alert('Rostro capturado correctamente.');
+
+                // Mostrar notificación de éxito
+                Swal.fire('Éxito', 'Rostro capturado correctamente.', 'success');
+
+                // Ocultar la cámara y mostrar el formulario
+                document.getElementById('cameraSection').style.display = 'none';
+                document.getElementById('sendEmailForm').style.display = 'block';
+
+                // Mostrar el contenido reconocido en el campo de texto
+                document.getElementById('body').value = 'Se detectó un rostro con las siguientes características:\n' + JSON.stringify(faceData, null, 2);
             } else {
-                alert('No se detectó ningún rostro.');
+                Swal.fire('Error', 'No se detectó ningún rostro.', 'error');
             }
         }
 
