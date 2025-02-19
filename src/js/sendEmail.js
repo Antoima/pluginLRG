@@ -21,14 +21,14 @@ $(document).ready(function () {
                 if (response.success) {
                   sendEmail(accessToken, to, subject, body);
                 } else {
-                  showError(response.message);
+                  showError(`Error de reCAPTCHA: ${response.message}`);
                 }
               } catch (e) {
-                showError("Respuesta inválida del servidor.");
+                showError(`Respuesta inválida: ${data}`);
               }
             })
-            .fail(() => {
-              showError("Error de conexión.");
+            .fail((xhr) => {
+              showError(`Error de conexión: ${xhr.statusText}`);
             });
         });
     });
