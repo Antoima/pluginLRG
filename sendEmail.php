@@ -29,9 +29,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     <div class="container mt-5">
         <!-- Título y formulario (ocultos inicialmente) -->
-        <div id="contentSection">
-            <h1 class="text-center mb-4">Enviar Correo</h1>
-            <form id="sendEmailForm" class="mt-4" method="POST">
+        <div id="contentSection" style="display: none;">
+        <h1 class="text-center mb-4">Enviar Correo</h1>
+        <form id="sendEmailForm" class="mt-4" method="POST">
                 <input type="hidden" id="faceData" name="face_data">
                 <div class="form-group">
                     <label for="to">Destinatario:</label>
