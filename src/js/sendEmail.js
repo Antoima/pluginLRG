@@ -16,15 +16,29 @@ $(document).ready(function () {
           // Verificar reCAPTCHA
           $.post("verifyRecaptcha.php", { recaptchaResponse: token })
             .done((data) => {
-              try {
-                const response = JSON.parse(data);
-                if (response.success) {
-                  sendEmail(accessToken, to, subject, body);
-                } else {
-                  showError(`Error de reCAPTCHA: ${response.message}`);
+              console.log("Respuesta del servidor:", data); // Depuración
+
+              // Verificar si data es un objeto o una cadena JSON
+              let response;
+              if (typeof data === "string") {
+                try {
+                  response = JSON.parse(data);
+                } catch (e) {
+                  showError(`Respuesta inválida: ${data}`);
+                  return;
                 }
-              } catch (e) {
+              } else if (typeof data === "object") {
+                response = data; // data ya es un objeto
+              } else {
                 showError(`Respuesta inválida: ${data}`);
+                return;
+              }
+
+              // Manejar la respuesta
+              if (response.success) {
+                sendEmail(accessToken, to, subject, body);
+              } else {
+                showError(`Error de reCAPTCHA: ${response.message}`);
               }
             })
             .fail((xhr) => {
