@@ -1,6 +1,6 @@
 $(document).ready(function () {
   const params = new URLSearchParams(window.location.search);
-  const accessToken = params.get("access_token");
+  const accessToken = localStorage.getItem("access_token"); // Usar localStorage en lugar de la URL
 
   $("#sendEmailForm").on("submit", function (event) {
     event.preventDefault();
