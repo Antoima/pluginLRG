@@ -64,7 +64,6 @@ $config = require '/home/dh_292vea/configuracion/config.php';
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/face-api.js/dist/face-api.min.js"></script>
-    <!-- <script src="https://kit.fontawesome.com/your-fontawesome-kit.js"></script> -->
     <script>
         // Definir la variable correctamente
         const recaptchaSiteKey = "<?= $config['recaptcha_site_key'] ?>";
