@@ -1,11 +1,10 @@
 <?php
 session_start();
 
-// Verificar si el token de acceso está en localStorage
 echo "<script>
     const accessToken = localStorage.getItem('access_token');
     if (!accessToken) {
-        window.location.href = 'index.php'; // Redirigir si no está autenticado
+        window.location.href = 'index.php';
     }
 </script>";
 ?>
@@ -19,16 +18,10 @@ echo "<script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11.4.20/dist/sweetalert2.min.css">
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
     <style>
-        .container {
-            margin-top: 50px;
-        }
-        .form-group {
-            margin-bottom: 20px;
-        }
-        .progress {
-            margin-top: 20px;
-            display: none; /* Ocultar inicialmente */
-        }
+        .container { margin-top: 50px; }
+        .form-group { margin-bottom: 20px; }
+        .progress { margin-top: 20px; display: none; }
+        .authenticated { border: 2px solid #28a745 !important; }
     </style>
 </head>
 <body>
@@ -41,17 +34,22 @@ echo "<script>
             </div>
             <div class="form-group">
                 <label for="destinationEmail">Destination Email Account (Migrate to) (Optional)</label>
-                <input type="email" class="form-control" id="destinationEmail" name="destinationEmail">
+                <div class="input-group">
+                    <input type="email" class="form-control" id="destinationEmail" name="destinationEmail" readonly>
+                    <div class="input-group-append">
+                        <button type="button" id="authDestinationBtn" class="btn btn-primary">
+                            Autenticar
+                        </button>
+                    </div>
+                </div>
             </div>
             <button type="submit" class="btn btn-primary btn-block">Start Backup/Migration</button>
         </form>
 
-        <!-- Barra de progreso -->
         <div class="progress">
-            <div class="progress-bar" role="progressbar" style="width: 0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">0%</div>
+            <div class="progress-bar" role="progressbar" style="width: 0%;">0%</div>
         </div>
 
-        <!-- Enlace para descargar el respaldo -->
         <div id="downloadBackup" class="text-center mt-4" style="display: none;">
             <a href="backup.mbox" class="btn btn-success btn-lg" download>
                 <i class="fas fa-download"></i> Descargar Respaldo
@@ -63,83 +61,58 @@ echo "<script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.4.20/dist/sweetalert2.all.min.js"></script>
     <script>
         $(document).ready(function () {
-            // Obtener el token de acceso desde localStorage
             const accessToken = localStorage.getItem('access_token');
+            let destinationAccessToken = localStorage.getItem('destination_access_token');
 
-            // Obtener el correo del usuario autenticado
+            // Autocompletar correo de origen
             $.ajax({
                 url: "https://www.googleapis.com/oauth2/v1/userinfo?alt=json",
-                type: "GET",
-                headers: {
-                    Authorization: `Bearer ${accessToken}`,
-                },
-                success: function (response) {
-                    // Autocompletar el campo de correo de origen
-                    $("#sourceEmail").val(response.email);
-                },
-                error: function (xhr) {
-                    Swal.fire({
-                        icon: "error",
-                        title: "Error",
-                        text: "No se pudo obtener la información del usuario.",
-                    });
-                },
+                headers: { Authorization: `Bearer ${accessToken}` },
+                success: (response) => $("#sourceEmail").val(response.email),
+                error: () => Swal.fire("Error", "No se pudo obtener la información del usuario.", "error")
             });
 
-            // Manejar el envío del formulario
-            $("#backupMigrationForm").on("submit", function (event) {
-                event.preventDefault();
+            // Autenticar cuenta de destino
+            $("#authDestinationBtn").click(() => {
+                const clientId = "TU_CLIENT_ID_GOOGLE"; // Reemplazar con tu Client ID
+                const redirectUri = "https://tudominio.com/auth-destination.php";
+                const scope = "https://www.googleapis.com/auth/gmail.send";
+                const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=token&scope=${scope}&state=destination`;
+                window.location.href = authUrl;
+            });
 
-                const sourceEmail = $("#sourceEmail").val();
+            // Verificar si ya hay token de destino
+            if (destinationAccessToken) {
+                $("#destinationEmail").addClass("authenticated").val("Cuenta autenticada ✔️");
+                $("#authDestinationBtn").prop("disabled", true);
+            }
+
+            // Enviar formulario
+            $("#backupMigrationForm").on("submit", function (e) {
+                e.preventDefault();
                 const destinationEmail = $("#destinationEmail").val();
 
-                if (!sourceEmail) {
-                    Swal.fire({
-                        icon: "error",
-                        title: "Error",
-                        text: "Por favor, ingresa la cuenta de origen.",
-                    });
+                if (destinationEmail && !destinationAccessToken) {
+                    Swal.fire("Error", "Primero autentica la cuenta de destino.", "error");
                     return;
                 }
 
-                // Mostrar la barra de progreso
                 $(".progress").show();
-
-                // Enviar los datos al servidor
                 $.ajax({
                     url: "process_backup_migration.php",
                     type: "POST",
                     data: {
-                        sourceEmail: sourceEmail,
+                        sourceEmail: $("#sourceEmail").val(),
                         destinationEmail: destinationEmail,
-                        accessToken: accessToken
+                        accessToken: accessToken,
+                        destinationAccessToken: destinationAccessToken
                     },
-                    success: function (response) {
+                    success: (response) => {
                         const result = JSON.parse(response);
-                        if (result.status === "success") {
-                            Swal.fire({
-                                icon: "success",
-                                title: "Éxito",
-                                text: result.message,
-                            });
-
-                            // Mostrar el enlace para descargar el respaldo
-                            $("#downloadBackup").show();
-                        } else {
-                            Swal.fire({
-                                icon: "error",
-                                title: "Error",
-                                text: result.message || "Hubo un problema al procesar la solicitud.",
-                            });
-                        }
+                        Swal.fire(result.status === "success" ? "Éxito" : "Error", result.message, result.status);
+                        if (result.status === "success") $("#downloadBackup").show();
                     },
-                    error: function (xhr) {
-                        Swal.fire({
-                            icon: "error",
-                            title: "Error",
-                            text: "Hubo un problema al conectar con el servidor.",
-                        });
-                    },
+                    error: () => Swal.fire("Error", "Error de conexión con el servidor.", "error")
                 });
             });
         });
