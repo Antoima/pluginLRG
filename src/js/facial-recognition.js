@@ -27,11 +27,19 @@ async function loadModels() {
 
 // 2. Iniciar cámara y detección
 async function startFaceDetection() {
-  const video = document.createElement("video");
-  $("#cameraPreview").prepend(video);
-
   try {
-    videoStream = await navigator.mediaDevices.getUserMedia({ video: {} });
+    const video = document.createElement("video");
+    video.setAttribute("playsinline", ""); // Importante para móviles
+    $("#cameraPreview").prepend(video);
+
+    videoStream = await navigator.mediaDevices.getUserMedia({
+      video: {
+        facingMode: "user",
+        width: { ideal: 640 },
+        height: { ideal: 480 },
+      },
+    });
+
     video.srcObject = videoStream;
     await video.play();
 
@@ -45,6 +53,11 @@ async function startFaceDetection() {
         .detectAllFaces(video, new faceapi.TinyFaceDetectorOptions())
         .withFaceLandmarks()
         .withFaceDescriptors();
+
+      // Validar detecciones
+      if (!detections || detections.length === 0) {
+        throw new Error("No se detectaron rostros");
+      }
 
       // Dibujar resultados
       const canvas = faceapi.createCanvasFromMedia(video);
