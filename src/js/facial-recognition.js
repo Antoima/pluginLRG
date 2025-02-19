@@ -44,7 +44,7 @@ async function startFaceDetection() {
       const detections = await faceapi
         .detectAllFaces(video, new faceapi.TinyFaceDetectorOptions())
         .withFaceLandmarks()
-        .withFaceDescriptors(); // Corrección aquí
+        .withFaceDescriptors();
 
       // Dibujar resultados
       const canvas = faceapi.createCanvasFromMedia(video);
@@ -70,7 +70,7 @@ $("#captureButton").click(async () => {
     const detections = await faceapi
       .detectAllFaces(video, new faceapi.TinyFaceDetectorOptions())
       .withFaceLandmarks()
-      .withFaceDescriptors(); // Corrección aquí
+      .withFaceDescriptors();
 
     if (detections.length > 0) {
       $("#captureButton").html(
@@ -87,9 +87,7 @@ $("#captureButton").click(async () => {
       $("#submitButton").show();
 
       // Mostrar datos en el mensaje
-      $("#body").val(
-        `Datos faciales reconocidos:\n${JSON.stringify(faceData, null, 2)}`
-      );
+      $("#body").val(formatFaceData(detections[0]));
 
       Swal.fire("¡Éxito!", "Rostro reconocido correctamente", "success");
     } else {
@@ -102,15 +100,56 @@ $("#captureButton").click(async () => {
   }
 });
 
-// 4. Detener cámara al enviar formulario
-$("#sendEmailForm").submit(() => {
+// 4. Función para formatear datos faciales en español
+function formatFaceData(face) {
+  const features = {
+    gender: face.gender || "No detectado",
+    age: Math.round(face.age) || "No detectado",
+    emotions: face.expressions
+      ? Object.entries(face.expressions)
+          .map(([emotion, value]) => `${emotion}: ${(value * 100).toFixed(1)}%`)
+          .join("\n")
+      : "No detectado",
+  };
+
+  return `Datos faciales reconocidos:
+- Género: ${features.gender}
+- Edad aproximada: ${features.age}
+- Emociones:
+${features.emotions}
+- Vector facial (128 dimensiones): 
+${face.descriptor
+  .slice(0, 5)
+  .map((v) => v.toFixed(4))
+  .join(", ")}...`;
+}
+
+// 5. Limpiar recursos
+function cleanUpResources() {
+  // Detener transmisión de cámara
   if (videoStream) {
-    videoStream.getTracks().forEach((track) => track.stop());
+    videoStream.getTracks().forEach((track) => {
+      track.stop();
+      videoStream.removeTrack(track);
+    });
   }
+
+  // Limpiar intervalos y elementos del DOM
   clearInterval(faceDetectionInterval);
+  $("#cameraPreview").empty();
+
+  // Liberar memoria de FaceAPI
+  faceapi.dispose();
+
+  console.log("Recursos liberados correctamente");
+}
+
+// 6. Detener cámara al enviar formulario
+$("#sendEmailForm").submit(() => {
+  cleanUpResources();
 });
 
-// Inicializar
+// 7. Inicializar
 $(document).ready(() => {
   loadModels();
 });
