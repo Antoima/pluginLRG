@@ -3,7 +3,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $faceData = json_decode($_POST['face_data'], true);
 
     if (!empty($faceData)) {
-        // Aquí puedes guardar los datos del rostro en una base de datos o compararlos con otros
         echo "Rostro capturado correctamente.";
     } else {
         echo "Error: No se detectó ningún rostro.";
@@ -16,121 +15,206 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Enviar Correo</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11.4.20/dist/sweetalert2.min.css" integrity="sha512-Yn5Z4XxNnXXE8Y+h/H1fwG/2qax2MxG9GeUOWL6CYDCSp4rTFwUpOZ1PS6JOuZaPBawASndfrlWYx8RGKgILhg==" crossorigin="anonymous">
-    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" integrity="sha512-MoRNloxbStBcD8z3M/2BmnT+rg4IsMxPkXaGh2zD6LGNNFE80W3onsAhRcMAMrSoyWL9xD7Ert0men7vR8LUZg==" crossorigin="anonymous">
-    <link rel="stylesheet" href="src/css/styles.css" />
-    <script src="https://www.google.com/recaptcha/api.js?render=<?php echo $recaptchaSiteKey; ?>"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11.4.20/dist/sweetalert2.min.css">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
     <style>
-        #cameraPreview { width: 300px; height: 300px; border: 2px solid #ccc; }
-        #captureButton { margin-top: 10px; }
-        #sendEmailForm { display: none; } /* Ocultar formulario al inicio */
+        #cameraPreview { 
+            width: 100%; 
+            height: 400px; 
+            border: 2px solid #ccc;
+            position: relative;
+        }
+        #captureButton { 
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 1000;
+        }
+        #sendEmailForm, #submitButton { display: none; }
+        #modelLoading {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 9999;
+        }
+        .face-box {
+            position: absolute;
+            border: 2px solid #00ff00;
+            background: rgba(0, 255, 0, 0.1);
+        }
+        @media (max-width: 768px) {
+            #cameraPreview { height: 300px; }
+        }
     </style>
 </head>
 <body>
+    <!-- Spinner de carga -->
+    <div id="modelLoading" class="spinner-border text-primary" role="status">
+        <span class="sr-only">Cargando modelos...</span>
+    </div>
+
     <div class="container mt-5">
-        <h1 class="text-center">Enviar Correo</h1>
-        <!-- Sección de reconocimiento facial -->
+        <h1 class="text-center mb-4">Enviar Correo</h1>
+        
+        <!-- Sección de cámara -->
         <div id="cameraSection">
-            <div class="form-group">
-                <label>Verificación Facial:</label>
-                <div id="cameraPreview"></div>
-                <button type="button" id="captureButton" class="btn btn-secondary">Capturar Rostro</button>
-                <input type="hidden" id="faceData" name="face_data">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Verificación Facial</h5>
+                    <div id="cameraPreview">
+                        <button type="button" id="captureButton" class="btn btn-primary btn-lg">
+                            <i class="fas fa-camera"></i> Capturar Rostro
+                        </button>
+                    </div>
+                </div>
             </div>
         </div>
 
-        <!-- Formulario de correo (oculto al inicio) -->
+        <!-- Formulario oculto inicialmente -->
         <form id="sendEmailForm" class="mt-4" method="POST">
+            <input type="hidden" id="faceData" name="face_data">
+            
             <div class="form-group">
-                <label for="to">Para:</label>
-                <input type="email" class="form-control" id="to" name="to" required />
+                <label for="to">Destinatario:</label>
+                <input type="email" class="form-control" id="to" name="to" required>
             </div>
+            
             <div class="form-group">
                 <label for="subject">Asunto:</label>
-                <input type="text" class="form-control" id="subject" name="subject" required />
+                <input type="text" class="form-control" id="subject" name="subject" required>
             </div>
+            
             <div class="form-group">
-                <label for="body">Cuerpo del mensaje:</label>
+                <label for="body">Mensaje:</label>
                 <textarea class="form-control" id="body" name="body" rows="5" required></textarea>
             </div>
-            <div id="recaptchaError" class="text-danger" style="display: none; margin-top: 10px"></div>
-            <button type="submit" class="btn btn-primary btn-block">Enviar</button>
+            
+            <button type="submit" id="submitButton" class="btn btn-success btn-block">
+                <i class="fas fa-paper-plane"></i> Enviar Correo
+            </button>
         </form>
     </div>
 
-    <div id="loading" class="d-none">
-        <div class="spinner-border text-primary" role="status">
-            <span class="sr-only">Cargando...</span>
-        </div>
-    </div>
-
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js" integrity="sha512-894YE6QWD5I59HgZOGReFYm4dnWc1Qt5NtvYSaNcOP+u1T9qYdvdihz0PPSiiqn/+/3e7Jo4EaG7TubfWGUrMQ==" crossorigin="anonymous"></script>
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.4.20/dist/sweetalert2.all.min.js" integrity="sha512-em9sd3gU/F3r7Xwm6gmW9yqCTBMrtF32wxHRQ8XS4MxW+tdW2mi16ZfbEj+i8iEhHCdgGnUWwSF+RX3WJiSjJA==" crossorigin="anonymous"></script>
-    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js" integrity="sha512-M5KW3ztuIICmVIhjSqXe01oV2bpe248gOxqmlcYrEzAvws7Pw3z6BK0iGbrwvdrUQUhi3eXgtxp5I8PDo9YfjQ==" crossorigin="anonymous"></script>
-    <script src="src/js/sendEmail.js"></script>
-    <!-- Agrega face-api.js -->
+    <!-- Scripts -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/face-api.js/dist/face-api.min.js"></script>
+    <script src="https://kit.fontawesome.com/your-fontawesome-kit.js"></script>
     <script>
-        // Cargar modelos
+        let videoStream;
+        let faceDetectionInterval;
+
+        // 1. Cargar modelos con spinner
         async function loadModels() {
             try {
-                await faceapi.nets.tinyFaceDetector.loadFromUri('/models');
-                await faceapi.nets.faceLandmark68Net.loadFromUri('/models');
-                await faceapi.nets.faceRecognitionNet.loadFromUri('/models');
-                console.log('Modelos cargados correctamente.');
-            } catch (err) {
-                console.error('Error cargando modelos:', err);
-                Swal.fire('Error', 'No se pudieron cargar los modelos de reconocimiento facial.', 'error');
+                $('#modelLoading').show();
+                
+                await Promise.all([
+                    faceapi.nets.tinyFaceDetector.loadFromUri('/models'),
+                    faceapi.nets.faceLandmark68Net.loadFromUri('/models'),
+                    faceapi.nets.faceRecognitionNet.loadFromUri('/models')
+                ]);
+                
+                $('#modelLoading').hide();
+                Swal.fire('Modelos cargados', 'La IA está lista para reconocer rostros', 'success');
+                startFaceDetection();
+                
+            } catch (error) {
+                $('#modelLoading').hide();
+                Swal.fire('Error', `Error cargando modelos: ${error.message}`, 'error');
             }
         }
 
-        // Iniciar cámara
-        async function startCamera() {
+        // 2. Detección en tiempo real con feedback visual
+        async function startFaceDetection() {
             const video = document.createElement('video');
-            document.getElementById('cameraPreview').appendChild(video);
-
+            $('#cameraPreview').prepend(video);
+            
             try {
-                const stream = await navigator.mediaDevices.getUserMedia({ video: {} });
-                video.srcObject = stream;
-                video.play();
-                return video;
-            } catch (err) {
-                console.error('Error al acceder a la cámara:', err);
-                Swal.fire('Error', 'No se pudo acceder a la cámara. Asegúrate de permitir el acceso.', 'error');
-                return null;
+                videoStream = await navigator.mediaDevices.getUserMedia({ video: {} });
+                video.srcObject = videoStream;
+                await video.play();
+
+                // Dibujar detecciones en tiempo real
+                faceDetectionInterval = setInterval(async () => {
+                    const detections = await faceapi.detectAllFaces(
+                        video, 
+                        new faceapi.TinyFaceDetectorOptions()
+                    ).withFaceLandmarks();
+                    
+                    // Limpiar canvas anterior
+                    const canvas = faceapi.createCanvasFromMedia(video);
+                    $('#cameraPreview canvas').remove();
+                    $('#cameraPreview').append(canvas);
+                    
+                    // Ajustar tamaño
+                    const displaySize = { width: video.width, height: video.height };
+                    faceapi.matchDimensions(canvas, displaySize);
+                    
+                    // Dibujar resultados
+                    const resizedDetections = faceapi.resizeResults(detections, displaySize);
+                    faceapi.draw.drawDetections(canvas, resizedDetections);
+                    faceapi.draw.drawFaceLandmarks(canvas, resizedDetections);
+                    
+                }, 100);
+
+            } catch (error) {
+                Swal.fire('Error', `Error de cámara: ${error.message}`, 'error');
             }
         }
 
-        // Capturar rostro
-        async function captureFace() {
-            const video = await startCamera();
-            if (!video) return;
+        // 3. Capturar rostro
+        $('#captureButton').click(async () => {
+            try {
+                const video = $('#cameraPreview video')[0];
+                const detections = await faceapi.detectAllFaces(
+                    video, 
+                    new faceapi.TinyFaceDetectorOptions()
+                ).withFaceDescriptors();
 
-            const detections = await faceapi.detectAllFaces(video, new faceapi.TinyFaceDetectorOptions())
-                .withFaceLandmarks()
-                .withFaceDescriptors();
-
-            if (detections.length > 0) {
-                const faceData = detections[0].descriptor;
-                document.getElementById('faceData').value = JSON.stringify(faceData);
-
-                // Mostrar notificación de éxito
-                Swal.fire('Éxito', 'Rostro capturado correctamente.', 'success');
-
-                // Ocultar la cámara y mostrar el formulario
-                document.getElementById('cameraSection').style.display = 'none';
-                document.getElementById('sendEmailForm').style.display = 'block';
-
-                // Mostrar el contenido reconocido en el campo de texto
-                document.getElementById('body').value = 'Se detectó un rostro con las siguientes características:\n' + JSON.stringify(faceData, null, 2);
-            } else {
-                Swal.fire('Error', 'No se detectó ningún rostro.', 'error');
+                if (detections.length > 0) {
+                    $('#captureButton').html('<i class="fas fa-spinner fa-spin"></i> Procesando...');
+                    
+                    // Obtener descriptor facial
+                    const faceData = detections[0].descriptor;
+                    $('#faceData').val(JSON.stringify(faceData));
+                    
+                    // Mostrar formulario
+                    $('#cameraSection').hide();
+                    $('#sendEmailForm').show();
+                    $('#submitButton').show();
+                    
+                    // Mostrar datos en el mensaje
+                    $('#body').val(`Datos faciales reconocidos:\n${JSON.stringify(faceData, null, 2)}`);
+                    
+                    Swal.fire('¡Éxito!', 'Rostro reconocido correctamente', 'success');
+                    
+                } else {
+                    Swal.fire('Error', 'No se detectó ningún rostro', 'error');
+                }
+                
+            } catch (error) {
+                Swal.fire('Error', `Error en reconocimiento: ${error.message}`, 'error');
+            } finally {
+                $('#captureButton').html('<i class="fas fa-camera"></i> Capturar Rostro');
             }
-        }
+        });
+
+        // 4. Detener cámara al enviar formulario
+        $('#sendEmailForm').submit(() => {
+            if (videoStream) {
+                videoStream.getTracks().forEach(track => track.stop());
+            }
+            clearInterval(faceDetectionInterval);
+        });
 
         // Inicializar
-        loadModels().then(() => {
-            document.getElementById('captureButton').addEventListener('click', captureFace);
+        $(document).ready(() => {
+            loadModels();
+            $('#modelLoading').hide(); // Ocultar spinner inicialmente
         });
     </script>
 </body>
