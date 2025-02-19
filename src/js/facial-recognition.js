@@ -4,17 +4,17 @@ let faceDetectionInterval;
 // 1. Cargar modelos
 async function loadModels() {
   try {
-    $("#loadingOverlay").show(); // Mostrar spinner
+    $("#loadingOverlay").show();
 
     await Promise.all([
       faceapi.nets.tinyFaceDetector.loadFromUri("/models"),
       faceapi.nets.faceLandmark68Net.loadFromUri("/models"),
       faceapi.nets.faceRecognitionNet.loadFromUri("/models"),
-      faceapi.nets.ageGenderNet.loadFromUri("/models"), // Nuevo
-      faceapi.nets.faceExpressionNet.loadFromUri("/models"), // Nuevo
+      faceapi.nets.ageGenderNet.loadFromUri("/models"),
+      faceapi.nets.faceExpressionNet.loadFromUri("/models"),
     ]);
 
-    $("#loadingOverlay").hide(); // Ocultar spinner
+    $("#loadingOverlay").hide();
     Swal.fire(
       "Modelos cargados",
       "La IA está lista para reconocer rostros",
@@ -31,7 +31,7 @@ async function loadModels() {
 async function startFaceDetection() {
   try {
     const video = document.createElement("video");
-    video.setAttribute("playsinline", ""); // Importante para móviles
+    video.setAttribute("playsinline", "");
     $("#cameraPreview").empty().append(video);
 
     videoStream = await navigator.mediaDevices.getUserMedia({
@@ -43,8 +43,7 @@ async function startFaceDetection() {
     });
 
     video.srcObject = videoStream;
-    //await video.play();
-    // Esperar a que la cámara esté lista
+
     await new Promise((resolve) => {
       video.onloadedmetadata = () => {
         video.width = video.videoWidth;
@@ -54,23 +53,19 @@ async function startFaceDetection() {
       };
     });
 
-    // Ajustar tamaño de la cámara
     video.width = $("#cameraPreview").width();
     video.height = $("#cameraPreview").height();
 
-    // Detección en tiempo real
     faceDetectionInterval = setInterval(async () => {
       const detections = await faceapi
         .detectAllFaces(video, new faceapi.TinyFaceDetectorOptions())
         .withFaceLandmarks()
-        .withFaceExpressions() // Detección de emociones
-        .withAgeAndGender() // Detección de edad y género
+        .withFaceExpressions()
+        .withAgeAndGender()
         .withFaceDescriptors();
 
-      // Validación segura
       if (!detections || detections.length === 0) return;
 
-      // Dibujar resultados
       const canvas = faceapi.createCanvasFromMedia(video);
       $("#cameraPreview canvas").remove();
       $("#cameraPreview").append(canvas);
@@ -95,8 +90,8 @@ $("#captureButton").click(async () => {
     const detections = await faceapi
       .detectAllFaces(video, new faceapi.TinyFaceDetectorOptions())
       .withFaceLandmarks()
-      .withFaceExpressions() // <- Agregar
-      .withAgeAndGender() // <- Agregar
+      .withFaceExpressions()
+      .withAgeAndGender()
       .withFaceDescriptors();
 
     if (detections.length > 0) {
@@ -104,7 +99,6 @@ $("#captureButton").click(async () => {
         '<i class="fas fa-spinner fa-spin"></i> Procesando...'
       );
 
-      // Guardar todos los datos faciales
       $("#faceData").val(
         JSON.stringify({
           descriptor: detections[0].descriptor,
@@ -114,13 +108,11 @@ $("#captureButton").click(async () => {
         })
       );
 
-      // Ocultar cámara y mostrar formulario
       $("#cameraSection").hide();
       $("#contentSection").show();
       $("#sendEmailForm").show();
       $("#submitButton").show();
 
-      // Mostrar datos formateados
       $("#body").val(
         formatFaceData({
           gender: detections[0].gender,
@@ -140,7 +132,7 @@ $("#captureButton").click(async () => {
   }
 });
 
-// 4. Función para formatear datos faciales
+// 4. Formatear datos
 function formatFaceData(face) {
   const genderMap = {
     male: "Masculino",
@@ -162,35 +154,22 @@ ${
 }`;
 }
 
-// En facial-recognition.js
-$("#faceData").val(
-  JSON.stringify({
-    descriptor: detections[0].descriptor,
-    gender: detections[0].gender,
-    age: detections[0].age,
-    expressions: detections[0].expressions,
-  })
-);
-
 // 5. Limpiar recursos
 function cleanUpResources() {
-  // Detener transmisión de cámara
   if (videoStream) {
     videoStream.getTracks().forEach((track) => {
       track.stop();
       videoStream.removeTrack(track);
     });
   }
-
-  // Limpiar intervalos y elementos del DOM
   clearInterval(faceDetectionInterval);
   $("#cameraPreview").empty();
-
   console.log("Recursos liberados correctamente");
 }
-// 6. Detener cámara al enviar formulario
+
+// 6. Evento submit
 $("#sendEmailForm").on("submit", function (event) {
-  event.preventDefault(); // Prevenir recarga de página
+  event.preventDefault();
   cleanUpResources();
 });
 
