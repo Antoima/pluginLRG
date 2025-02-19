@@ -1,14 +1,3 @@
-<?php
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $faceData = json_decode($_POST['face_data'], true);
-
-    if (!empty($faceData)) {
-        echo "Rostro capturado correctamente.";
-    } else {
-        echo "Error: No se detectó ningún rostro.";
-    }
-}
-?>
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -30,8 +19,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <div class="container mt-5">
         <!-- Título y formulario (ocultos inicialmente) -->
         <div id="contentSection" style="display: none;">
-        <h1 class="text-center mb-4">Enviar Correo</h1>
-        <form id="sendEmailForm" class="mt-4" method="POST">
+            <h1 class="text-center mb-4">Enviar Correo</h1>
+            <form id="sendEmailForm" class="mt-4">
                 <input type="hidden" id="faceData" name="face_data">
                 <div class="form-group">
                     <label for="to">Destinatario:</label>
@@ -73,5 +62,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <script src="https://cdn.jsdelivr.net/npm/face-api.js/dist/face-api.min.js"></script>
     <script src="https://kit.fontawesome.com/your-fontawesome-kit.js"></script>
     <script src="src/js/facial-recognition.js"></script>
+    <script src="src/js/sendEmail.js"></script> <!-- Incluye el nuevo script -->
 </body>
 </html>
