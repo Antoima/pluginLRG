@@ -10,7 +10,8 @@ $(document).ready(function () {
     // Obtener el token de reCAPTCHA v3
     grecaptcha.ready(function () {
       grecaptcha
-        .execute("6Lckg9UqAAAAAEVFkZhz7IqoE8iQln4ehpVmBKTS", {
+        .execute(recaptchaSiteKey, {
+          // Usar la variable JS
           action: "submit",
         })
         .then(function (token) {

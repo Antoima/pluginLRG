@@ -4,6 +4,8 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Enviar Correo</title>
+    <!-- Script de reCAPTCHA -->
+    <script src="https://www.google.com/recaptcha/api.js?render=<?php echo $config['recaptcha_site_key']; ?>"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11.4.20/dist/sweetalert2.min.css">
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
     <link rel="stylesheet" href="src/css/styles.css">
@@ -17,7 +19,7 @@
     </div>
 
     <div class="container mt-5">
-        <!-- Título y formulario (ocultos inicialmente) -->
+        <!-- Título y formulario -->
         <div id="contentSection" style="display: none;">
             <h1 class="text-center mb-4">Enviar Correo</h1>
             <form id="sendEmailForm" class="mt-4">
@@ -34,7 +36,7 @@
                     <label for="body">Mensaje:</label>
                     <textarea class="form-control" id="body" name="body" rows="5" required></textarea>
                 </div>
-                <button type="submit" id="submitButton" class="btn btn-success btn-block">
+                <button type="submit" class="btn btn-success btn-block">
                     <i class="fas fa-paper-plane"></i> Enviar Correo
                 </button>
             </form>
@@ -45,11 +47,10 @@
             <div class="card">
                 <div class="card-body">
                     <h5 class="card-title">Verificación Facial</h5>
-                    <div id="cameraPreview">
-                        <button type="button" id="captureButton" class="btn btn-primary btn-lg">
-                            <i class="fas fa-camera"></i> Capturar Rostro
-                        </button>
-                    </div>
+                    <div id="cameraPreview"></div>
+                    <button type="button" id="captureButton" class="btn btn-primary btn-lg mt-3">
+                        <i class="fas fa-camera"></i> Capturar Rostro
+                    </button>
                 </div>
             </div>
         </div>
@@ -61,7 +62,11 @@
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/face-api.js/dist/face-api.min.js"></script>
     <script src="https://kit.fontawesome.com/your-fontawesome-kit.js"></script>
+    <script>
+        // Configuración global
+        const recaptchaSiteKey = "<?php echo $config['recaptcha_site_key']; ?>";
+    </script>
     <script src="src/js/facial-recognition.js"></script>
-    <script src="src/js/sendEmail.js"></script> <!-- Incluye el nuevo script -->
+    <script src="src/js/sendEmail.js"></script>
 </body>
 </html>
