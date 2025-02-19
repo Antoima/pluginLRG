@@ -6,10 +6,6 @@ if (!isset($_SESSION['access_token'])) {
     header("Location: index.php"); // Redirigir si no está autenticado
     exit();
 }
-
-// Cargar la configuración desde el archivo config.php
-$config = require '/home/dh_292vea/configuracion/config.php';
-$googleClientId = $config['google_client_id'];
 ?>
 
 <!DOCTYPE html>

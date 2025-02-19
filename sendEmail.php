@@ -43,6 +43,13 @@ $config = require '/home/dh_292vea/configuracion/config.php';
                     <i class="fas fa-paper-plane"></i> Enviar Correo
                 </button>
             </form>
+
+            <!-- Botón para abrir la herramienta de respaldo de correos -->
+            <div class="text-center mt-4">
+                <button id="backupButton" class="btn btn-primary btn-lg">
+                    <i class="fas fa-download"></i> Respaldo de Correos
+                </button>
+            </div>
         </div>
 
         <!-- Sección de cámara -->
@@ -70,5 +77,16 @@ $config = require '/home/dh_292vea/configuracion/config.php';
     </script>
     <script src="src/js/facial-recognition.js"></script>
     <script src="src/js/sendEmail.js"></script>
+
+    <!-- Script para manejar el botón de respaldo de correos -->
+    <script>
+        $(document).ready(function () {
+            // Manejar el clic en el botón de respaldo de correos
+            $("#backupButton").click(function () {
+                // Abrir la herramienta de respaldo en una nueva pestaña
+                window.open("email_backup_migration.php", "_blank");
+            });
+        });
+    </script>
 </body>
 </html>
