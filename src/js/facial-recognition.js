@@ -138,14 +138,11 @@ function cleanUpResources() {
   clearInterval(faceDetectionInterval);
   $("#cameraPreview").empty();
 
-  // Liberar memoria de FaceAPI
-  faceapi.dispose();
-
   console.log("Recursos liberados correctamente");
 }
-
 // 6. Detener cámara al enviar formulario
-$("#sendEmailForm").submit(() => {
+$("#sendEmailForm").on("submit", function (event) {
+  event.preventDefault(); // Prevenir recarga de página
   cleanUpResources();
 });
 
