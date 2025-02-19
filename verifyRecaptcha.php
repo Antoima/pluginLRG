@@ -1,4 +1,7 @@
 <?php
+error_reporting(0);
+header('Content-Type: application/json');
+
 // Cargar la configuración
 $config = require '/home/dh_292vea/configuracion/config.php';
 $secretKey = $config['recaptcha_secret_key'];

@@ -72,6 +72,9 @@ $(document).ready(function () {
           icon: "success",
           confirmButtonText: "Aceptar",
         });
+        $("#sendEmailForm")[0].reset();
+        $("#contentSection").hide();
+        $("#cameraSection").show();
       },
       error: function (xhr, status, error) {
         console.error("Error al enviar el correo:", xhr.responseText);

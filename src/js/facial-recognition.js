@@ -10,6 +10,8 @@ async function loadModels() {
       faceapi.nets.tinyFaceDetector.loadFromUri("/models"),
       faceapi.nets.faceLandmark68Net.loadFromUri("/models"),
       faceapi.nets.faceRecognitionNet.loadFromUri("/models"),
+      faceapi.nets.ageGenderNet.loadFromUri("/models"), // Nuevo
+      faceapi.nets.faceExpressionNet.loadFromUri("/models"), // Nuevo
     ]);
 
     $("#loadingOverlay").hide(); // Ocultar spinner
@@ -61,6 +63,8 @@ async function startFaceDetection() {
       const detections = await faceapi
         .detectAllFaces(video, new faceapi.TinyFaceDetectorOptions())
         .withFaceLandmarks()
+        .withFaceExpressions() // Detección de emociones
+        .withAgeAndGender() // Detección de edad y género
         .withFaceDescriptors();
 
       // Validar detecciones
@@ -123,29 +127,37 @@ $("#captureButton").click(async () => {
   }
 });
 
-// 4. Función para formatear datos faciales en español
+// 4. Función para formatear datos faciales
 function formatFaceData(face) {
-  const features = {
-    gender: face.gender || "No detectado",
-    age: Math.round(face.age) || "No detectado",
-    emotions: face.expressions
-      ? Object.entries(face.expressions)
-          .map(([emotion, value]) => `${emotion}: ${(value * 100).toFixed(1)}%`)
-          .join("\n")
-      : "No detectado",
+  const genderMap = {
+    male: "Masculino",
+    female: "Femenino",
   };
 
   return `Datos faciales reconocidos:
-- Género: ${features.gender}
-- Edad aproximada: ${features.age}
-- Emociones:
-${features.emotions}
-- Vector facial (128 dimensiones): 
-${face.descriptor
-  .slice(0, 5)
-  .map((v) => v.toFixed(4))
-  .join(", ")}...`;
+- Género: ${genderMap[face.gender] || "No detectado"}
+- Edad aproximada: ${face.age ? Math.round(face.age) + " años" : "No detectado"}
+- Emociones principales: 
+${
+  face.expressions
+    ? Object.entries(face.expressions)
+        .sort(([, a], [, b]) => b - a)
+        .slice(0, 3)
+        .map(([emotion, value]) => `• ${emotion}: ${(value * 100).toFixed(1)}%`)
+        .join("\n")
+    : "No detectado"
+}`;
 }
+
+// En facial-recognition.js
+$("#faceData").val(
+  JSON.stringify({
+    descriptor: detections[0].descriptor,
+    gender: detections[0].gender,
+    age: detections[0].age,
+    expressions: detections[0].expressions,
+  })
+);
 
 // 5. Limpiar recursos
 function cleanUpResources() {
