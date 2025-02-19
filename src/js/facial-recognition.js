@@ -67,10 +67,8 @@ async function startFaceDetection() {
         .withAgeAndGender() // Detección de edad y género
         .withFaceDescriptors();
 
-      // Validar detecciones
-      if (!detections || detections.length === 0) {
-        throw new Error("No se detectaron rostros");
-      }
+      // Validación segura
+      if (!detections || detections.length === 0) return;
 
       // Dibujar resultados
       const canvas = faceapi.createCanvasFromMedia(video);
@@ -97,6 +95,8 @@ $("#captureButton").click(async () => {
     const detections = await faceapi
       .detectAllFaces(video, new faceapi.TinyFaceDetectorOptions())
       .withFaceLandmarks()
+      .withFaceExpressions() // <- Agregar
+      .withAgeAndGender() // <- Agregar
       .withFaceDescriptors();
 
     if (detections.length > 0) {
@@ -104,8 +104,15 @@ $("#captureButton").click(async () => {
         '<i class="fas fa-spinner fa-spin"></i> Procesando...'
       );
 
-      const faceData = detections[0].descriptor;
-      $("#faceData").val(JSON.stringify(faceData));
+      // Guardar todos los datos faciales
+      $("#faceData").val(
+        JSON.stringify({
+          descriptor: detections[0].descriptor,
+          gender: detections[0].gender,
+          age: detections[0].age,
+          expressions: detections[0].expressions,
+        })
+      );
 
       // Ocultar cámara y mostrar formulario
       $("#cameraSection").hide();
@@ -113,8 +120,14 @@ $("#captureButton").click(async () => {
       $("#sendEmailForm").show();
       $("#submitButton").show();
 
-      // Mostrar datos en el mensaje
-      $("#body").val(formatFaceData(detections[0]));
+      // Mostrar datos formateados
+      $("#body").val(
+        formatFaceData({
+          gender: detections[0].gender,
+          age: detections[0].age,
+          expressions: detections[0].expressions,
+        })
+      );
 
       Swal.fire("¡Éxito!", "Rostro reconocido correctamente", "success");
     } else {

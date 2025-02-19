@@ -72,9 +72,10 @@ $(document).ready(function () {
           icon: "success",
           confirmButtonText: "Aceptar",
         });
-        $("#sendEmailForm")[0].reset();
-        $("#contentSection").hide();
-        $("#cameraSection").show();
+        $("#sendEmailForm")[0].reset(); // Limpiar formulario
+        $("#contentSection").hide(); // Ocultar formulario
+        $("#cameraSection").show(); // Mostrar cámara de nuevo
+        cleanUpResources(); // Limpiar recursos
       },
       error: function (xhr, status, error) {
         console.error("Error al enviar el correo:", xhr.responseText);
