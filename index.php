@@ -49,9 +49,9 @@ if ($resultado === 1) {
     echo "<script>console.log('La firma es válida. La metadata no ha sido modificada.');</script>";
 } elseif ($resultado === 0) {
     echo "<script>console.error('¡Advertencia! La metadata ha sido modificada. Acceso denegado.');</script>";
-    die("¡Advertencia! La metadata ha sido modificada. Acceso denegado.");
+    // die("¡Advertencia! La metadata ha sido modificada. Acceso denegado.");
 } else {
-    die("Error al verificar la firma.");
+    // die("Error al verificar la firma.");
 }
 
 // Continuar con la carga normal de la página
