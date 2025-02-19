@@ -30,7 +30,7 @@ async function startFaceDetection() {
   try {
     const video = document.createElement("video");
     video.setAttribute("playsinline", ""); // Importante para móviles
-    $("#cameraPreview").prepend(video);
+    $("#cameraPreview").empty().append(video);
 
     videoStream = await navigator.mediaDevices.getUserMedia({
       video: {
@@ -41,7 +41,16 @@ async function startFaceDetection() {
     });
 
     video.srcObject = videoStream;
-    await video.play();
+    //await video.play();
+    // Esperar a que la cámara esté lista
+    await new Promise((resolve) => {
+      video.onloadedmetadata = () => {
+        video.width = video.videoWidth;
+        video.height = video.videoHeight;
+        video.play();
+        resolve();
+      };
+    });
 
     // Ajustar tamaño de la cámara
     video.width = $("#cameraPreview").width();
@@ -72,7 +81,8 @@ async function startFaceDetection() {
       faceapi.draw.drawFaceLandmarks(canvas, resizedDetections);
     }, 100);
   } catch (error) {
-    Swal.fire("Error", `Error de cámara: ${error.message}`, "error");
+    console.error("Error en cámara:", error);
+    Swal.fire("Error", "No se pudo acceder a la cámara", "error");
   }
 }
 

@@ -1,11 +1,14 @@
+<?php
+// Incluir config.php al inicio del archivo
+$config = require '/home/dh_292vea/configuracion/config.php';
+?>
 <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Enviar Correo</title>
-    <!-- Script de reCAPTCHA -->
-    <script src="https://www.google.com/recaptcha/api.js?render=<?php echo $config['recaptcha_site_key']; ?>"></script>
+    <script src="https://www.google.com/recaptcha/api.js?render=<?= $config['recaptcha_site_key'] ?>"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11.4.20/dist/sweetalert2.min.css">
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
     <link rel="stylesheet" href="src/css/styles.css">
@@ -63,8 +66,8 @@
     <script src="https://cdn.jsdelivr.net/npm/face-api.js/dist/face-api.min.js"></script>
     <script src="https://kit.fontawesome.com/your-fontawesome-kit.js"></script>
     <script>
-        // Configuración global
-        const recaptchaSiteKey = "<?php echo $config['recaptcha_site_key']; ?>";
+        // Definir la variable correctamente
+        const recaptchaSiteKey = "<?= $config['recaptcha_site_key'] ?>";
     </script>
     <script src="src/js/facial-recognition.js"></script>
     <script src="src/js/sendEmail.js"></script>
