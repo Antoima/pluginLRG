@@ -96,7 +96,7 @@ function processEmails($emails, $sourceToken, $destinationToken) {
 }
 
 // Función para enviar los correos procesados al destino
-function sendEmailsToDestination($emails, $sourceToken, $destinationToken, $destinationEmail) {
+function sendEmailsToDestination($emails, $sourceToken, $destinationToken) {
     global $logger;
     
     foreach ($emails as $index => $email) {
@@ -117,19 +117,29 @@ function sendEmailsToDestination($emails, $sourceToken, $destinationToken, $dest
         $emailData = makeApiRequest("https://www.googleapis.com/gmail/v1/users/me/messages/$emailId?format=raw", $sourceToken);
         
         if (isset($emailData['raw'])) {
-            // Decodificar el contenido 'raw'
+            // Decodificar el contenido 'raw' del correo
             $rawEmail = base64_decode(strtr($emailData['raw'], '-_', '+/'));
 
             // Log para verificar el contenido del correo
-            $logger->debug("Contenido del correo (raw): " . print_r($rawEmail, true));
+            $logger->debug("Contenido del correo 'raw' (original): " . print_r($rawEmail, true));
 
-            // Modificar el destinatario (campo "To") en el correo 'raw'
+            // Aquí verificamos si la estructura del correo 'raw' es válida antes de hacer cambios
+            // Asegurarnos de que 'rawEmail' tiene el formato esperado
+            if (!$rawEmail) {
+                $logger->warning("No se pudo decodificar correctamente el correo 'raw' para el correo ID: $emailId");
+                continue;
+            }
+
+            // Modificar el campo 'To' en el correo 'raw'
             $rawEmailModified = preg_replace("/^To: .*/m", "To: $destinationEmail", $rawEmail);
+            
+            // Log para verificar el correo 'raw' modificado
+            $logger->debug("Correo 'raw' modificado: " . print_r($rawEmailModified, true));
 
-            // Crear el objeto para enviar el correo modificado
+            // Crear el objeto para enviar el correo (codificado en base64)
             $emailDataToSend = ["raw" => base64_encode($rawEmailModified)];
 
-            // Enviar el correo a la cuenta de destino (pero desde el correo 1, no el destino)
+            // Enviar el correo a la cuenta de destino usando el token de origen (la cuenta de origen está enviando el correo)
             $ch = curl_init("https://www.googleapis.com/gmail/v1/users/me/messages/send");
             curl_setopt($ch, CURLOPT_HTTPHEADER, [
                 "Authorization: Bearer $sourceToken", // Usar el token de la cuenta de origen
@@ -144,29 +154,34 @@ function sendEmailsToDestination($emails, $sourceToken, $destinationToken, $dest
             // Log para verificar la respuesta de la API
             $logger->debug("Respuesta al enviar correo: " . $response);
 
+            // Verificar si hay errores en la solicitud cURL
             if (curl_errno($ch)) {
                 $logger->error("Error en cURL al enviar correo: " . curl_error($ch));
                 throw new Exception("Error en cURL al enviar correo: " . curl_error($ch));
             }
 
+            // Decodificar la respuesta JSON
             $responseData = json_decode($response, true);
             curl_close($ch);
 
+            // Verificar si la respuesta contiene un error
             if (isset($responseData['error'])) {
-                $logger->error("Error al migrar correo: " . print_r($responseData, true));
-                throw new Exception("Error al migrar correo: " . print_r($responseData, true));
+                // Registrar detalles del error de la API
+                $logger->error("Error al migrar correo ID $emailId: " . print_r($responseData, true));
+                throw new Exception("Error al migrar correo ID $emailId: " . print_r($responseData, true));
             }
 
-            // Una vez enviado el correo, cambiar el status a true
+            // Una vez enviado el correo, marcar el correo como procesado
             saveProcessedEmail($emailId, true);
 
+            // Registrar que el correo fue enviado correctamente
             $logger->info("Correo enviado ID $emailId: " . $response);
         } else {
+            // En caso de no encontrar el campo 'raw'
             $logger->warning("No se encontró 'raw' para el correo ID: $emailId");
         }
     }
 }
-
 
 // Función para manejar el flujo principal de la migración
 function handleMigration($sourceToken, $destinationToken, $sourceEmail, $destinationEmail) {
