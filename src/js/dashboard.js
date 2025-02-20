@@ -40,17 +40,17 @@ $(document).ready(function () {
   // Verificar y renovar el token si es necesario
   async function getValidAccessToken() {
     let accessToken = localStorage.getItem("access_token");
-    const refreshToken = localStorage.getItem("refresh_token");
+    console.log("Token actual:", accessToken); // ✅ Depuración
 
     if (!accessToken) {
       throw new Error("No hay token de acceso disponible.");
     }
 
-    // Verificar si el token es válido
     try {
       await getUserInfo(accessToken);
       return accessToken;
     } catch (error) {
+      console.log("Error al validar token:", error); // ✅ Depuración
       // Si el token ha expirado, renovarlo
       if (refreshToken) {
         const response = await fetch("https://oauth2.googleapis.com/token", {
@@ -78,21 +78,23 @@ $(document).ready(function () {
     }
   }
 
-  // Autocompletar correo de origen
+  // En la función que obtiene el correo de origen
   getValidAccessToken()
     .then((accessToken) => {
+      console.log("Token renovado:", accessToken); // ✅ Depuración
       return getUserInfo(accessToken);
     })
     .then((response) => {
+      console.log("Respuesta de Google:", response); // ✅ Depuración
       $("#sourceEmail").val(response.email);
     })
     .catch((error) => {
+      console.error("Error crítico:", error); // ✅ Depuración
       Swal.fire(
         "Error",
         "No se pudo obtener la información del usuario.",
         "error"
       );
-      console.error("Error:", error);
     });
 
   // Autenticar cuenta de destino
@@ -103,7 +105,7 @@ $(document).ready(function () {
           "https://pl.luisguevara.net/auth-destination.php"
         )}&
         response_type=token&
-        scope=email%20https://www.googleapis.com/auth/gmail.send&
+        scope=email%20https://www.googleapis.com/auth/gmail.send& 
         state=destination&
         prompt=select_account`.replace(/\s+/g, "");
 

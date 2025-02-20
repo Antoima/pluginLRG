@@ -1,20 +1,4 @@
 <?php
-session_start();
-
-echo "<script>
-    const accessToken = localStorage.getItem('access_token');
-    if (!accessToken) {
-        window.location.href = 'index.php';
-    }
-</script>";
-
-// Almacenar el token en la sesión al iniciar sesión
-$_SESSION['access_token'] = $_POST['accessToken'];
-
-?>
-
-
-<?php
 // Incluir config.php al inicio del archivo
 $config = require '/home/dh_292vea/configuracion/config.php';
 $googleClientId = $config['google_client_id'];
