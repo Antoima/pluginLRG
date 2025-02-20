@@ -16,6 +16,7 @@ function getProcessedEmails() {
     return json_decode($processed, true) ?? [];
 }
 
+
 // Función para guardar un correo procesado en el archivo
 function saveProcessedEmail($emailId, $status = false) {
     $processedEmails = getProcessedEmails();
@@ -28,6 +29,7 @@ function saveProcessedEmail($emailId, $status = false) {
         $logger->info("Correo ID $emailId marcado como procesado.");
     }
 }
+
 
 // Función para truncar las respuestas largas
 function truncateResponse($response) {
@@ -65,9 +67,12 @@ function makeApiRequest($url, $token) {
 
 // Función para obtener los correos de Gmail filtrando por etiquetas (por defecto, solo bandeja de entrada)
 function getEmails($token, $label = 'INBOX') {
+    // URL para obtener los correos de una etiqueta específica
     $url = "https://www.googleapis.com/gmail/v1/users/me/messages?labelIds=$label";
     return makeApiRequest($url, $token)['messages'] ?? [];
 }
+
+
 
 // Función para procesar los correos y asegurar que solo se procesen correos no enviados
 function processEmails($emails, $sourceToken, $destinationToken) {
@@ -127,6 +132,7 @@ function processEmails($emails, $sourceToken, $destinationToken) {
     return $mboxContent;
 }
 
+
 // Función para enviar los correos procesados al destino
 function sendEmailsToDestination($emails, $sourceToken, $destinationToken) {
     global $logger;
@@ -145,7 +151,7 @@ function sendEmailsToDestination($emails, $sourceToken, $destinationToken) {
         }
 
         if ($emailStatus === true) {
-            $logger->info("Correo ID $emailId ya procesado. Saltando...");
+            $logger->info("Correo ID $emailId ya procesado. Omitiendo...");
             continue;  // Salta este correo si ya fue procesado
         }
 
@@ -200,11 +206,14 @@ function sendEmailsToDestination($emails, $sourceToken, $destinationToken) {
                     $logger->warning("Error al enviar correo ID $emailId: " . print_r($responseData, true));
                 }
             }
+
         } else {
             $logger->warning("No se encontró 'raw' para el correo ID: $emailId");
         }
     }
 }
+
+
 
 // Función para manejar el flujo principal de la migración
 function handleMigration($sourceToken, $destinationToken, $sourceEmail, $destinationEmail) {
@@ -244,7 +253,40 @@ function handleMigration($sourceToken, $destinationToken, $sourceEmail, $destina
     echo json_encode(["status" => "success", "message" => "Proceso completado."]);
 }
 
+
+// Función para verificar el token de destino
+function checkDestinationToken($destinationToken) {
+    global $logger;
+    $url = "https://www.googleapis.com/gmail/v1/users/me/profile";
+    $response = makeApiRequest($url, $destinationToken);
+    
+    // Si hay un error, el token de destino es inválido
+    if (isset($response['error'])) {
+        $logger->error("Error en el token de destino: " . print_r($response, true));
+        throw new Exception("Error en el token de destino.");
+    }
+
+    return $response;
+}
+
+
+// Función para verificar el token de origen
+function checkSourceToken($sourceToken) {
+    global $logger;
+    $url = "https://www.googleapis.com/gmail/v1/users/me/profile";
+    $response = makeApiRequest($url, $sourceToken);
+
+    // Si hay un error, el token de origen es inválido
+    if (isset($response['error'])) {
+        $logger->error("Error en el token de origen: " . print_r($response, true));
+        throw new Exception("Error en el token de origen.");
+    }
+
+    return $response;
+}
+
 header('Content-Type: application/json');
+
 $sourceToken = $_POST['accessToken'] ?? null;
 $destinationToken = $_POST['destinationAccessToken'] ?? null;
 $sourceEmail = $_POST['sourceEmail'] ?? null;
