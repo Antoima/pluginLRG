@@ -124,15 +124,26 @@ function sendEmailsToDestination($emails, $sourceToken, $destinationToken) {
             $logger->debug("Contenido del correo 'raw' (original): " . print_r($rawEmail, true));
 
             // Aquí verificamos si la estructura del correo 'raw' es válida antes de hacer cambios
-            // Asegurarnos de que 'rawEmail' tiene el formato esperado
             if (!$rawEmail) {
                 $logger->warning("No se pudo decodificar correctamente el correo 'raw' para el correo ID: $emailId");
+                continue;
+            }
+
+            // Asegurarnos de que la dirección del destinatario esté bien formada
+            if (empty($destinationEmail) || !filter_var($destinationEmail, FILTER_VALIDATE_EMAIL)) {
+                $logger->error("Dirección de destino no válida para el correo ID: $emailId");
                 continue;
             }
 
             // Modificar el campo 'To' en el correo 'raw'
             $rawEmailModified = preg_replace("/^To: .*/m", "To: $destinationEmail", $rawEmail);
             
+            // Verificar si el correo 'raw' modificado contiene el destinatario correctamente
+            if (strpos($rawEmailModified, "To: $destinationEmail") === false) {
+                $logger->warning("No se pudo modificar correctamente el destinatario del correo ID: $emailId");
+                continue;
+            }
+
             // Log para verificar el correo 'raw' modificado
             $logger->debug("Correo 'raw' modificado: " . print_r($rawEmailModified, true));
 
