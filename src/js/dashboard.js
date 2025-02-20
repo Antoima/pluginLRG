@@ -6,6 +6,7 @@ $(document).ready(function () {
   window.addEventListener("message", (event) => {
     if (event.data.action === "destinationAuthenticated") {
       const email2 = event.data.email; // Obtener el correo electrónico
+      console.log("Correo autenticado:", email2);
       $("#destinationEmail").addClass("authenticated").val(email2); // Mostrar el correo electrónico
       $("#authDestinationBtn").prop("disabled", true).text("Autenticado");
       localStorage.setItem("destination_access_token", event.data.accessToken);
