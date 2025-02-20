@@ -142,12 +142,16 @@ $(document).ready(function () {
     $(".progress").show();
     const progressBar = $(".progress-bar");
 
-    // Función para sondear el progreso
     const checkProgress = setInterval(() => {
       $.get("check_progress.php", (progress) => {
+        progress = parseInt(progress); // Asegúrate de que sea un número
         progressBar.css("width", progress + "%").text(progress + "%");
+
+        if (progress >= 100) {
+          clearInterval(checkProgress);
+        }
       });
-    }, 1000);
+    }, 1000); // Verifica cada 1 segundo
 
     // Enviar el token de acceso en los datos del formulario
     const formData = {
