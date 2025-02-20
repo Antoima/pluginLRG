@@ -62,6 +62,11 @@ try {
         $rawEmail = base64_decode(strtr($emailData['raw'], '-_', '+/'));
         $mboxContent .= "From - " . date('r') . "\n" . $rawEmail . "\n\n";
     }
+
+    // Verificar el contenido antes de escribir
+    error_log("Contenido del archivo de respaldo: " . $mboxContent);
+
+
     file_put_contents("backup.mbox", $mboxContent);
 
     // 3. Migrar correos
@@ -79,6 +84,12 @@ try {
             $emailData = json_decode(curl_exec($ch), true);
             curl_close($ch);
             $rawEmail = base64_decode(strtr($emailData['raw'], '-_', '+/'));
+            if (empty($rawEmail)) {
+                error_log("Correo vacío para el mensaje: " . print_r($email, true));
+            } else {
+                $mboxContent .= "From - " . date('r') . "\n" . $rawEmail . "\n\n";
+            }
+            
 
             // Enviar con token de destino
             $ch = curl_init("https://www.googleapis.com/gmail/v1/users/me/messages/send");
@@ -112,5 +123,14 @@ function getEmails($token) {
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
     $response = json_decode(curl_exec($ch), true);
     curl_close($ch);
+
+    // Depuración: Imprimir la respuesta de la API
+    if (isset($response['messages'])) {
+        error_log("Emails obtenidos: " . print_r($response['messages'], true));
+    } else {
+        error_log("Error al obtener correos: " . print_r($response, true));
+    }
+
     return $response['messages'] ?? [];
 }
+?>
