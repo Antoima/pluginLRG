@@ -17,12 +17,17 @@ function getProcessedEmails() {
 }
 
 // Función para guardar un correo procesado en el archivo
-function saveProcessedEmail($emailId) {
+function saveProcessedEmail($emailId, $status = false) {
     $processedEmails = getProcessedEmails();
     
     // Si el correo no está en la lista, lo agregamos
-    if (!in_array($emailId, $processedEmails)) {
-        $processedEmails[] = $emailId;
+    if (!isset($processedEmails[$emailId])) {
+        $processedEmails[$emailId] = ['status' => $status];
+        file_put_contents('processed_emails.json', json_encode($processedEmails));
+    }
+    // Si ya está procesado y se quiere cambiar el estado
+    if ($status !== false) {
+        $processedEmails[$emailId]['status'] = $status;
         file_put_contents('processed_emails.json', json_encode($processedEmails));
     }
 }
@@ -62,7 +67,7 @@ function processEmails($emails, $sourceToken, $destinationToken) {
         $emailId = $email['id'];
 
         // Verificar si el correo ya ha sido procesado
-        if (in_array($emailId, getProcessedEmails())) {
+        if (isset($processedEmails[$emailId]) && $processedEmails[$emailId]['status'] === true) {
             $logger->info("Correo ID $emailId ya procesado. Saltando...");
             continue;
         }
@@ -83,7 +88,8 @@ function processEmails($emails, $sourceToken, $destinationToken) {
             $logger->warning("No se encontró 'raw' en la respuesta para el mensaje ID: $emailId");
         }
 
-        saveProcessedEmail($emailId);  // Marcar como procesado
+        // Guardar el correo como procesado pero con status false
+        saveProcessedEmail($emailId, false);  // Marcar como procesado, pero no enviado aún
     }
     
     return $mboxContent;
@@ -97,7 +103,7 @@ function sendEmailsToDestination($emails, $sourceToken, $destinationToken) {
         $emailId = $email['id'];
         
         // Verificar si el correo ya ha sido procesado
-        if (in_array($emailId, getProcessedEmails())) {
+        if (isset($processedEmails[$emailId]) && $processedEmails[$emailId]['status'] === true) {
             $logger->info("Correo ID $emailId ya procesado. Saltando...");
             continue;
         }
@@ -146,6 +152,9 @@ function sendEmailsToDestination($emails, $sourceToken, $destinationToken) {
                 $logger->error("Error al migrar correo: " . print_r($responseData, true));
                 throw new Exception("Error al migrar correo: " . print_r($responseData, true));
             }
+
+            // Una vez enviado el correo, cambiar el status a true
+            saveProcessedEmail($emailId, true);
 
             $logger->info("Correo enviado ID $emailId: " . $response);
         } else {
