@@ -73,7 +73,6 @@ function getEmails($token, $label = 'INBOX') {
 }
 
 
-
 // Función para procesar los correos y asegurar que solo se procesen correos no enviados
 function processEmails($emails, $sourceToken, $destinationToken) {
     global $logger;
@@ -84,21 +83,8 @@ function processEmails($emails, $sourceToken, $destinationToken) {
     foreach ($emails as $index => $email) {
         $emailId = $email['id'];
 
-        // Verificar si el correo ya ha sido procesado y su estado
-        $processedEmails = getProcessedEmails();
-        $emailStatus = null;
-        foreach ($processedEmails as $processedEmail) {
-            if ($processedEmail['id'] === $emailId) {
-                $emailStatus = $processedEmail['status'];
-                break;
-            }
-        }
-
-        // Solo procesamos el correo si su estado es 'false'
-        if ($emailStatus === true) {
-            $logger->info("Correo ID $emailId ya procesado y enviado. Saltando...");
-            continue;  // Salta este correo si ya fue procesado
-        }
+        // Eliminamos la verificación de si ya fue procesado y su estado
+        // Procesamos todos los correos sin importar si ya han sido procesados antes
 
         // Actualizar el progreso
         $_SESSION['progress'] = 25 + (($index / $totalEmails) * 25);
@@ -113,13 +99,6 @@ function processEmails($emails, $sourceToken, $destinationToken) {
             // Decodificar el contenido base64 del correo
             $rawEmail = base64_decode(strtr($emailData['raw'], '-_', '+/'));
 
-            // Verificar etiquetas para evitar enviar correos de "Enviados"
-            $emailLabels = $emailData['labelIds'] ?? [];
-            if (in_array('SENT', $emailLabels)) {
-                $logger->info("Correo ID $emailId ya fue enviado previamente. Omitiendo...");
-                continue;  // Omitir este correo si ya está en "SENT"
-            }
-
             // Agregar el contenido al mbox
             $mboxContent .= "From - " . date('r') . "\n" . $rawEmail . "\n\n";
         } else {
@@ -133,7 +112,6 @@ function processEmails($emails, $sourceToken, $destinationToken) {
     return $mboxContent;
 }
 
-
 // Función para enviar los correos procesados al destino
 function sendEmailsToDestination($emails, $sourceToken, $destinationToken) {
     global $logger;
@@ -141,21 +119,8 @@ function sendEmailsToDestination($emails, $sourceToken, $destinationToken) {
     foreach ($emails as $index => $email) {
         $emailId = $email['id'];
 
-        // Verificar si el correo ya ha sido procesado y su estado
-        $processedEmails = getProcessedEmails();
-        $emailStatus = null;
-        foreach ($processedEmails as $processedEmail) {
-            if ($processedEmail['id'] === $emailId) {
-                $emailStatus = $processedEmail['status'];
-                break;
-            }
-        }
-
-        // Solo enviamos el correo si su estado es 'false'
-        if ($emailStatus === true) {
-            $logger->info("Correo ID $emailId ya procesado y enviado. Omitiendo...");
-            continue;  // Salta este correo si ya fue procesado
-        }
+        // Eliminamos la verificación de si el correo ya ha sido procesado y su estado
+        // Ahora enviamos todos los correos sin comprobar su estado
 
         $_SESSION['progress'] = 50 + (($index / count($emails)) * 50);
         session_write_close();
@@ -251,7 +216,6 @@ function handleMigration($sourceToken, $destinationToken, $sourceEmail, $destina
     $logger->info("Proceso de migración completado exitosamente.");
     echo json_encode(["status" => "success", "message" => "Proceso completado."]);
 }
-
 
 // Función para verificar el token de destino
 function checkDestinationToken($destinationToken) {
