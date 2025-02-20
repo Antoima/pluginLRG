@@ -179,9 +179,25 @@ $(document).ready(function () {
         );
         if (response.status === "success") $("#downloadBackup").show();
       },
-      error: () => {
+      error: (xhr, status, error) => {
         clearInterval(checkProgress);
-        Swal.fire("Error", "Error de conexión con el servidor.", "error");
+
+        // Mostrar los detalles del error
+        console.log("Error:", status, error); // Puedes ver esto en la consola para depuración
+
+        // Extraer el mensaje de error, si existe
+        let errorMessage = xhr.responseText || "Error desconocido";
+        if (xhr.status === 0) {
+          errorMessage =
+            "No se pudo conectar al servidor. Verifica tu conexión a Internet.";
+        } else if (xhr.status >= 400 && xhr.status < 500) {
+          errorMessage = `Error del cliente (${xhr.status}): ${xhr.statusText}.`;
+        } else if (xhr.status >= 500) {
+          errorMessage = `Error del servidor (${xhr.status}): ${xhr.statusText}.`;
+        }
+
+        // Mostrar la alerta con el mensaje de error detallado
+        Swal.fire("Error", errorMessage, "error");
       },
     });
   });
