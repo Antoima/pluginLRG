@@ -64,19 +64,22 @@ function makeApiRequest($url, $token) {
 }
 
 
-// Función para obtener los correos de Gmail
-function getEmails($token) {
-    $url = "https://www.googleapis.com/gmail/v1/users/me/messages";
+// Función para obtener los correos de Gmail filtrando por etiquetas (por defecto, solo bandeja de entrada)
+
+function getEmails($token, $label = 'INBOX') {
+    // URL para obtener los correos de una etiqueta específica
+    $url = "https://www.googleapis.com/gmail/v1/users/me/messages?labelIds=$label";
     return makeApiRequest($url, $token)['messages'] ?? [];
 }
 
-// Función para procesar los correos
+
+// Función para procesar los correos y asegurar que solo los correos de la bandeja de entrada sean procesados
 function processEmails($emails, $sourceToken, $destinationToken) {
     global $logger;
-    
+
     $mboxContent = '';
     $totalEmails = count($emails);
-    
+
     foreach ($emails as $index => $email) {
         $emailId = $email['id'];
 
@@ -96,15 +99,26 @@ function processEmails($emails, $sourceToken, $destinationToken) {
         $emailData = makeApiRequest("https://www.googleapis.com/gmail/v1/users/me/messages/$emailId?format=raw", $sourceToken);
 
         if (isset($emailData['raw'])) {
+            // Decodificar el contenido base64 del correo
             $rawEmail = base64_decode(strtr($emailData['raw'], '-_', '+/'));
+
+            // Verificar etiquetas para evitar enviar correos de "Enviados"
+            $emailLabels = $emailData['labelIds'] ?? [];
+            if (in_array('SENT', $emailLabels)) {
+                $logger->info("Correo ID $emailId ya fue enviado previamente. Omitiendo...");
+                continue;  // Omitir este correo
+            }
+
+            // Agregar el contenido al mbox
             $mboxContent .= "From - " . date('r') . "\n" . $rawEmail . "\n\n";
         } else {
             $logger->warning("No se encontró 'raw' en la respuesta para el mensaje ID: $emailId");
         }
 
-        saveProcessedEmail($emailId);  // Marcar como procesado
+        // Marcar el correo como procesado
+        saveProcessedEmail($emailId);
     }
-    
+
     return $mboxContent;
 }
 
@@ -166,7 +180,6 @@ function sendEmailsToDestination($emails, $sourceToken, $destinationToken) {
     }
 }
 
-
 // Función para manejar el flujo principal de la migración
 function handleMigration($sourceToken, $destinationToken, $sourceEmail, $destinationEmail) {
     global $logger;
@@ -187,7 +200,7 @@ function handleMigration($sourceToken, $destinationToken, $sourceEmail, $destina
     }
 
     // Obtener los correos de la cuenta de origen
-    $emails = getEmails($sourceToken);
+    $emails = getEmails($sourceToken);  // Obtener correos solo de la bandeja de entrada
     $totalEmails = count($emails);
     $logger->info("Total de correos obtenidos de la cuenta de origen: $totalEmails");
 
