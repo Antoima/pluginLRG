@@ -14,7 +14,6 @@ if (empty($sourceToken)) {
 }
 
 // Obtener tokens desde POST
-$sourceToken = $_POST['accessToken'] ?? null;
 $destinationToken = $_POST['destinationAccessToken'] ?? null;
 $sourceEmail = $_POST['sourceEmail'];
 $destinationEmail = $_POST['destinationEmail'];
