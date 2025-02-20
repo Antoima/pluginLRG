@@ -103,7 +103,7 @@ $(document).ready(function () {
           "https://pl.luisguevara.net/auth-destination.php"
         )}&
         response_type=token&
-        scope=https://www.googleapis.com/auth/gmail.send&
+        scope=email%20https://www.googleapis.com/auth/gmail.send&
         state=destination&
         prompt=select_account`.replace(/\s+/g, "");
 
