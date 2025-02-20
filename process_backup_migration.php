@@ -117,6 +117,10 @@ function sendEmailsToDestination($emails, $sourceToken, $destinationToken) {
             // Crear el objeto para enviar el correo
             $emailDataToSend = ["raw" => base64_encode($rawEmail)];
 
+            // Log para ver los datos que estamos enviando a la API
+            $logger->debug("URL de solicitud para enviar correo: https://www.googleapis.com/gmail/v1/users/me/messages/send");
+            $logger->debug("Enviando datos del correo ID $emailId: " . print_r($emailDataToSend, true));  // Datos del correo
+
             // Enviar el correo a la cuenta de destino
             $ch = curl_init("https://www.googleapis.com/gmail/v1/users/me/messages/send");
             curl_setopt($ch, CURLOPT_HTTPHEADER, [
@@ -127,34 +131,29 @@ function sendEmailsToDestination($emails, $sourceToken, $destinationToken) {
             curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($emailDataToSend));
             curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 
+            // Solicitar respuesta cURL
             $response = curl_exec($ch);
 
-            $logger->debug("Enviando correo ID $emailId a la cuenta de destino: $destinationEmail");
-            
-$logger->debug("URL de la solicitud: https://www.googleapis.com/gmail/v1/users/me/messages/send");
+            // Log para ver la respuesta completa de la API
+            if ($response === false) {
+                $logger->error("Error en cURL al enviar correo: " . curl_error($ch));
+            } else {
+                $responseData = json_decode($response, true);
+                $logger->debug("Respuesta completa al enviar correo ID $emailId: " . print_r($responseData, true));  // Respuesta completa
+            }
 
-$response = curl_exec($ch);
-
-// Log para ver la respuesta completa de la API
-if ($response === false) {
-    $logger->error("Error en cURL al enviar correo: " . curl_error($ch));
-} else {
-    $responseData = json_decode($response, true);
-    $logger->debug("Respuesta al enviar correo: " . print_r($responseData, true));
-}
-
-
+            // Comprobamos si hubo un error en la respuesta
             if (curl_errno($ch)) {
                 $logger->error("Error en cURL al enviar correo: " . curl_error($ch));
                 throw new Exception("Error en cURL al enviar correo: " . curl_error($ch));
             }
 
             if (isset($responseData['error'])) {
-                $logger->error("Error al migrar correo: " . print_r($responseData, true));
-                throw new Exception("Error al migrar correo: " . print_r($responseData, true));
+                $logger->error("Error al migrar correo ID $emailId: " . print_r($responseData, true));
+                throw new Exception("Error al migrar correo ID $emailId: " . print_r($responseData, true));
             }
 
-            $logger->info("Correo enviado ID $emailId: " . $response);
+            $logger->info("Correo enviado exitosamente ID $emailId: " . $response);
         } else {
             $logger->warning("No se encontró 'raw' para el correo ID: $emailId");
         }
@@ -166,16 +165,16 @@ function handleMigration($sourceToken, $destinationToken, $sourceEmail, $destina
     global $logger;
 
     // Verificar el token de destino
-if ($destinationEmail && $destinationToken) {
-    try {
-        checkDestinationToken($destinationToken); // Verificar que el token de destino sea válido
-        $logger->info("Token de destino verificado con éxito.");
-    } catch (Exception $e) {
-        $logger->error("Error al verificar token de destino: " . $e->getMessage());
-        echo json_encode(["status" => "error", "message" => "Error al verificar el token de destino."]);
-        exit();
+    if ($destinationEmail && $destinationToken) {
+        try {
+            checkDestinationToken($destinationToken); // Verificar que el token de destino sea válido
+            $logger->info("Token de destino verificado con éxito.");
+        } catch (Exception $e) {
+            $logger->error("Error al verificar token de destino: " . $e->getMessage());
+            echo json_encode(["status" => "error", "message" => "Error al verificar el token de destino."]);
+            exit();
+        }
     }
-}
 
     // Obtener los correos de la cuenta de origen
     $emails = getEmails($sourceToken);
@@ -187,8 +186,8 @@ if ($destinationEmail && $destinationToken) {
     file_put_contents("backup.mbox", $mboxContent);
     $logger->info("Respaldo generado con éxito.");
 
-
-
+    // Enviar los correos procesados al destino
+    sendEmailsToDestination($emails, $sourceToken, $destinationToken);
 
     $_SESSION['progress'] = 100;
     session_write_close();
@@ -198,12 +197,13 @@ if ($destinationEmail && $destinationToken) {
 
 // Verificar si el token de destino es válido
 function checkDestinationToken($destinationToken) {
+    global $logger;
+
     $url = "https://www.googleapis.com/gmail/v1/users/me/profile";
     $response = makeApiRequest($url, $destinationToken);
     
     // Si hay un error, el token es inválido
     if (isset($response['error'])) {
-        global $logger;
         $logger->error("Error en el token de destino: " . print_r($response, true));
         throw new Exception("Error en el token de destino.");
     }
