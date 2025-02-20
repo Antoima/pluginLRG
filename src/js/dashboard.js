@@ -5,18 +5,21 @@ $(document).ready(function () {
   // Escuchar mensajes desde auth-destination.php
   window.addEventListener("message", (event) => {
     if (event.data.action === "destinationAuthenticated") {
-      // Verificar si ya hay token de destino
-      if (destinationAccessToken) {
-        $("#destinationEmail").addClass("authenticated").val(email);
-        $("#authDestinationBtn").prop("disabled", true);
-      }
+      const email = event.data.email; // Primero obtener el email
 
-      const email = event.data.email;
-      $("#destinationEmail").addClass("authenticated").val(email);
+      // Actualizar el token desde localStorage
+      const newDestinationToken = event.data.accessToken;
+      localStorage.setItem("destination_access_token", newDestinationToken);
+
+      // Actualizar UI
+      $("#destinationEmail")
+        .addClass("authenticated")
+        .val(email)
+        .trigger("input");
+
       $("#authDestinationBtn").prop("disabled", true).text("Autenticado");
-      localStorage.setItem("destination_access_token", event.data.accessToken);
 
-      // Mostrar notificación con SweetAlert2
+      // Mostrar notificación
       Swal.fire({
         icon: "success",
         title: "Autenticación exitosa",
@@ -24,6 +27,10 @@ $(document).ready(function () {
         timer: 3000,
         showConfirmButton: false,
       });
+    }
+
+    if (event.data.action === "authError") {
+      Swal.fire("Error de autenticación", event.data.error, "error");
     }
   });
 
@@ -162,10 +169,5 @@ $(document).ready(function () {
         Swal.fire("Error", "Error de conexión con el servidor.", "error");
       },
     });
-  });
-  window.addEventListener("message", (event) => {
-    if (event.data.action === "authError") {
-      Swal.fire("Error de autenticación", event.data.error, "error");
-    }
   });
 });
