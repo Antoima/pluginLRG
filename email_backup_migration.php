@@ -48,16 +48,16 @@ $googleClientId = $config['google_client_id'];
                 <input type="email" class="form-control" id="sourceEmail" name="sourceEmail" required readonly>
             </div>
             <div class="form-group">
-                <label for="destinationEmail">Destination Email Account (Migrate to) (Optional)</label>
-                <div class="input-group">
-                    <input type="email" class="form-control" id="destinationEmail" name="destinationEmail" readonly>
-                    <div class="input-group-append">
-                        <button type="button" id="authDestinationBtn" class="btn btn-primary">
-                            Autenticar
-                        </button>
-                    </div>
-                </div>
-            </div>
+    <label for="destinationEmail">Destination Email Account (Migrate to) (Optional)</label>
+    <div class="input-group">
+        <input type="email" class="form-control" id="destinationEmail" name="destinationEmail" readonly>
+        <div class="input-group-append">
+            <button type="button" id="authDestinationBtn" class="btn btn-primary">
+                Autenticar
+            </button>
+        </div>
+    </div>
+</div>
             <button type="submit" class="btn btn-primary btn-block">Start Backup/Migration</button>
         </form>
 
