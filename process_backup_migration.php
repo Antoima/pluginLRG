@@ -21,15 +21,12 @@ function getProcessedEmails() {
 function saveProcessedEmail($emailId, $status = false) {
     $processedEmails = getProcessedEmails();
 
-    // Si el correo no está en la lista, lo agregamos
-    if (!in_array($emailId, array_column($processedEmails, 'id'))) {
-        $processedEmails[] = ['id' => $emailId, 'status' => $status];
-        file_put_contents('processed_emails.json', json_encode($processedEmails));
-        global $logger;
-        $logger->info("Correo ID $emailId marcado como procesado.");
-    }
+    // Eliminamos la verificación del estado y siempre procesamos todos los correos
+    $processedEmails[] = ['id' => $emailId, 'status' => $status];
+    file_put_contents('processed_emails.json', json_encode($processedEmails));
+    global $logger;
+    $logger->info("Correo ID $emailId marcado como procesado.");
 }
-
 
 // Función para truncar las respuestas largas
 function truncateResponse($response) {
@@ -83,7 +80,6 @@ function processEmails($emails, $sourceToken, $destinationToken) {
     foreach ($emails as $index => $email) {
         $emailId = $email['id'];
 
-        // Eliminamos la verificación de si ya fue procesado y su estado
         // Procesamos todos los correos sin importar si ya han sido procesados antes
 
         // Actualizar el progreso
@@ -105,7 +101,7 @@ function processEmails($emails, $sourceToken, $destinationToken) {
             $logger->warning("No se encontró 'raw' en la respuesta para el mensaje ID: $emailId");
         }
 
-        // Marcar el correo como procesado para evitar duplicados (con estado 'false' por ahora)
+        // Marcar el correo como procesado para evitar duplicados (sin verificar su estado)
         saveProcessedEmail($emailId, false);
     }
 
@@ -119,8 +115,7 @@ function sendEmailsToDestination($emails, $sourceToken, $destinationToken) {
     foreach ($emails as $index => $email) {
         $emailId = $email['id'];
 
-        // Eliminamos la verificación de si el correo ya ha sido procesado y su estado
-        // Ahora enviamos todos los correos sin comprobar su estado
+        // Procesamos todos los correos sin verificar su estado
 
         $_SESSION['progress'] = 50 + (($index / count($emails)) * 50);
         session_write_close();
