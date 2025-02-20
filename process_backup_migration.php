@@ -1,10 +1,50 @@
 <?php
+// Incluir el archivo de configuración del log
+require_once 'log.php'; // Asegúrate de que la ruta es correcta
+
 session_start(); // Asegúrate de que la sesión esté iniciada
+
+// Validar token desde POST (no sesión)
+$sourceToken = $_POST['accessToken'] ?? null;
+if (empty($sourceToken)) {
+    // Log error
+    $logger->error("Token no proporcionado.");
+    echo json_encode(["status" => "error", "message" => "Token no proporcionado."]);
+    exit();
+}
+
+// Obtener tokens desde POST
+$sourceToken = $_POST['accessToken'] ?? null;
+$destinationToken = $_POST['destinationAccessToken'] ?? null;
+$sourceEmail = $_POST['sourceEmail'];
+$destinationEmail = $_POST['destinationEmail'];
+
+// Validar tokens
+if (empty($sourceToken)) {
+    // Log error
+    $logger->error("Token de origen no proporcionado.");
+    echo json_encode(["status" => "error", "message" => "Token de origen no proporcionado."]);
+    exit();
+}
+
+if ($destinationEmail && empty($destinationToken)) {
+    // Log error
+    $logger->error("Token de destino no proporcionado.");
+    echo json_encode(["status" => "error", "message" => "Token de destino no proporcionado."]);
+    exit();
+}
 
 // Asegurarte de que la variable de sesión 'processedEmails' exista
 if (!isset($_SESSION['processedEmails'])) {
     $_SESSION['processedEmails'] = []; // Inicializa la lista de correos procesados
 }
+
+// Configurar el tipo de contenido como JSON
+header('Content-Type: application/json');
+
+// Inicializar sesión para progreso
+$_SESSION['progress'] = 0;
+session_write_close(); // Liberar el bloqueo de sesión
 
 try {
     // 1. Obtener correos
@@ -152,5 +192,4 @@ function getEmails($token) {
 
     return $response['messages'] ?? [];
 }
-
 ?>
