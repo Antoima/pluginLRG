@@ -18,11 +18,28 @@ session_start();
         }, '*');
         window.close();
     } else if (accessToken && window.opener) {
-        window.opener.postMessage({
-            action: 'destinationAuthenticated',
-            accessToken: accessToken
-        }, '*');
-        window.close();
+        // Obtener el correo electrónico del usuario autenticado
+        fetch("https://www.googleapis.com/oauth2/v1/userinfo?alt=json", {
+            headers: {
+                Authorization: `Bearer ${accessToken}`
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            window.opener.postMessage({
+                action: 'destinationAuthenticated',
+                accessToken: accessToken,
+                email: data.email // Enviar el correo electrónico
+            }, '*');
+            window.close();
+        })
+        .catch(error => {
+            window.opener.postMessage({
+                action: 'authError',
+                error: 'No se pudo obtener el correo electrónico.'
+            }, '*');
+            window.close();
+        });
     } else {
         document.write('Error: Parámetros de autenticación no válidos.');
     }
