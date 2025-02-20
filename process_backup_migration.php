@@ -80,8 +80,6 @@ function processEmails($emails, $sourceToken, $destinationToken) {
     foreach ($emails as $index => $email) {
         $emailId = $email['id'];
 
-        // Procesamos todos los correos sin importar si ya han sido procesados antes
-
         // Actualizar el progreso
         $_SESSION['progress'] = 25 + (($index / $totalEmails) * 25);
         session_write_close();
@@ -115,8 +113,7 @@ function sendEmailsToDestination($emails, $sourceToken, $destinationToken) {
     foreach ($emails as $index => $email) {
         $emailId = $email['id'];
 
-        // Procesamos todos los correos sin verificar su estado
-
+        // Actualizar el progreso del envío
         $_SESSION['progress'] = 50 + (($index / count($emails)) * 50);
         session_write_close();
 
