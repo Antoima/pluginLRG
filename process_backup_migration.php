@@ -3,6 +3,24 @@ require_once 'log.php';
 
 session_start();
 
+// Mostrar el contenido de los tokens recibidos
+$sourceToken = $_POST['accessToken'] ?? null;
+$destinationToken = $_POST['destinationAccessToken'] ?? null;
+
+var_dump($sourceToken, $destinationToken);  // Para debug
+if (empty($sourceToken)) {
+    $logger->error("Token no proporcionado.");
+    echo json_encode(["status" => "error", "message" => "Token no proporcionado."]);
+    exit();
+}
+
+if ($destinationEmail && empty($destinationToken)) {
+    $logger->error("Token de destino no proporcionado.");
+    echo json_encode(["status" => "error", "message" => "Token de destino no proporcionado."]);
+    exit();
+}
+
+
 // Función para obtener correos procesados
 function getProcessedEmails() {
     // Verificamos si el archivo existe
