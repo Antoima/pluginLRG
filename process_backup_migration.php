@@ -5,11 +5,15 @@ session_start();
 
 // Función para obtener correos procesados
 function getProcessedEmails() {
-    if (file_exists('processed_emails.json')) {
-        $processed = file_get_contents('processed_emails.json');
-        return json_decode($processed, true) ?? [];
+    // Verificamos si el archivo existe
+    if (!file_exists('processed_emails.json')) {
+        // Si el archivo no existe, crearlo vacío
+        file_put_contents('processed_emails.json', json_encode([]));
     }
-    return [];
+
+    // Leer el archivo y decodificar su contenido
+    $processed = file_get_contents('processed_emails.json');
+    return json_decode($processed, true) ?? [];  // Devuelve el contenido como array
 }
 
 // Función para guardar correo procesado
