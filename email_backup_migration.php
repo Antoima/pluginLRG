@@ -50,15 +50,7 @@ $googleClientId = $config['google_client_id'];
             <div class="form-group">
     <label for="destinationEmail">Destination Email Account (Migrate to) (Optional)</label>
     <div class="input-group">
-<!-- Añadir placeholder para mejor UX -->
-<input 
-  type="email" 
-  class="form-control" 
-  id="destinationEmail" 
-  name="destinationEmail" 
-  readonly
-  placeholder="Haz clic en Autenticar para seleccionar cuenta">
-
+        <input type="email" class="form-control" id="destinationEmail" name="destinationEmail" readonly>
         <div class="input-group-append">
             <button type="button" id="authDestinationBtn" class="btn btn-primary">
                 Autenticar
