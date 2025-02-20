@@ -152,7 +152,7 @@ $googleClientId = $config['google_client_id'];
             // Autenticar cuenta de destino
             $("#authDestinationBtn").click(() => {
                 const clientId = "<?php echo $googleClientId; ?>"; // Usar el client_id desde PHP
-                const redirectUri = encodeURIComponent("https://tudominio.com/auth-destination.php"); // Codificar la URL
+                const redirectUri = encodeURIComponent("https://pl.luisguevara.net/auth-destination.php"); // Codificar la URL
                 const scope = "https://www.googleapis.com/auth/gmail.send";
                 
                 // Construir la URL sin saltos de línea ni espacios
