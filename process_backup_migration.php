@@ -96,7 +96,7 @@ function processEmails($emails, $sourceToken, $destinationToken) {
 }
 
 // Función para enviar los correos procesados al destino
-function sendEmailsToDestination($emails, $sourceToken, $destinationToken) {
+function sendEmailsToDestination($emails, $sourceToken, $destinationToken, $destinationEmail) {
     global $logger;
     
     foreach ($emails as $index => $email) {
@@ -124,6 +124,13 @@ function sendEmailsToDestination($emails, $sourceToken, $destinationToken) {
 
             // Crear el objeto para enviar el correo
             $emailDataToSend = ["raw" => base64_encode($rawEmail)];
+
+            // Modificar el destinatario del correo para enviarlo al correo 2 (destino)
+            // Esto es importante para que el correo se envíe a la cuenta de destino
+            $rawEmailModified = str_replace("To: .*", "To: $destinationEmail", $rawEmail); // Reemplazamos el campo 'To'
+
+            // Crear el objeto para enviar el correo modificado
+            $emailDataToSend = ["raw" => base64_encode($rawEmailModified)];
 
             // Enviar el correo a la cuenta de destino (pero desde el correo 1, no el destino)
             $ch = curl_init("https://www.googleapis.com/gmail/v1/users/me/messages/send");
