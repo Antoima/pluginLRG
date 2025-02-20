@@ -7,7 +7,12 @@ echo "<script>
         window.location.href = 'index.php';
     }
 </script>";
+
+// Almacenar el token en la sesión al iniciar sesión
+$_SESSION['access_token'] = $_POST['accessToken'];
+
 ?>
+
 
 <?php
 // Incluir config.php al inicio del archivo

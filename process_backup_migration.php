@@ -1,10 +1,6 @@
 <?php
 session_start();
 
-// Depuración: Imprimir la sesión y los datos POST
-error_log("Sesión: " . print_r($_SESSION, true));
-error_log("POST: " . print_r($_POST, true)); 
-
 // Verificar autenticación
 if (!isset($_SESSION['access_token'])) {
     echo json_encode(["status" => "error", "message" => "No autenticado."]);

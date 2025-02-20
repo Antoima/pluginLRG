@@ -1,8 +1,5 @@
 <?php
 session_start();
-
-// Almacenar el token en la sesión al iniciar sesión
-$_SESSION['access_token'] = $_POST['accessToken'];
 ?>
 <!DOCTYPE html>
 <html>
@@ -21,6 +18,7 @@ $_SESSION['access_token'] = $_POST['accessToken'];
         })
         .then(response => response.json())
         .then(data => {
+            // Enviar el token y el email a la ventana principal
             window.opener.postMessage({
                 action: "destinationAuthenticated",
                 accessToken: accessToken,
@@ -29,6 +27,7 @@ $_SESSION['access_token'] = $_POST['accessToken'];
             window.close();
         })
         .catch(error => {
+            // Enviar un mensaje de error si falla
             window.opener.postMessage({
                 action: "authError",
                 error: "Error al obtener el email"
@@ -36,6 +35,7 @@ $_SESSION['access_token'] = $_POST['accessToken'];
             window.close();
         });
     } else {
+        // Cerrar la ventana si no hay token
         window.close();
     }
 </script>
