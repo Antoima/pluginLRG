@@ -9,7 +9,6 @@ if (empty($sourceToken)) {
     exit();
 }
 
-// Resto del código...
 
 // Obtener tokens desde POST
 $sourceToken = $_POST['accessToken'] ?? null;
