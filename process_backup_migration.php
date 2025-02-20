@@ -112,7 +112,10 @@ function sendEmailsToDestination($emails, $sourceToken, $destinationToken) {
         
         if (isset($emailData['raw'])) {
             $rawEmail = base64_decode(strtr($emailData['raw'], '-_', '+/'));
-            
+
+            // Log para verificar el contenido del correo
+            $logger->debug("Contenido del correo (raw): " . print_r($rawEmail, true));
+
             // Crear el objeto para enviar el correo
             $emailDataToSend = ["raw" => base64_encode($rawEmail)];
 
@@ -127,19 +130,26 @@ function sendEmailsToDestination($emails, $sourceToken, $destinationToken) {
             curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 
             $response = curl_exec($ch);
+
+            // Log para verificar la respuesta de la API
+            $logger->debug("Respuesta al enviar correo: " . $response);
+
             if (curl_errno($ch)) {
                 $logger->error("Error en cURL al enviar correo: " . curl_error($ch));
                 throw new Exception("Error en cURL al enviar correo: " . curl_error($ch));
             }
-            curl_close($ch);
 
             $responseData = json_decode($response, true);
+            curl_close($ch);
+
             if (isset($responseData['error'])) {
                 $logger->error("Error al migrar correo: " . print_r($responseData, true));
                 throw new Exception("Error al migrar correo: " . print_r($responseData, true));
             }
 
             $logger->info("Correo enviado ID $emailId: " . $response);
+        } else {
+            $logger->warning("No se encontró 'raw' para el correo ID: $emailId");
         }
     }
 }
@@ -168,6 +178,21 @@ function handleMigration($sourceToken, $destinationToken, $sourceEmail, $destina
     session_write_close();
     $logger->info("Proceso de migración completado exitosamente.");
     echo json_encode(["status" => "success", "message" => "Proceso completado."]);
+}
+
+// Verificar si el token de destino es válido
+function checkDestinationToken($destinationToken) {
+    $url = "https://www.googleapis.com/gmail/v1/users/me/profile";
+    $response = makeApiRequest($url, $destinationToken);
+    
+    // Si hay un error, el token es inválido
+    if (isset($response['error'])) {
+        global $logger;
+        $logger->error("Error en el token de destino: " . print_r($response, true));
+        throw new Exception("Error en el token de destino.");
+    }
+
+    return $response;
 }
 
 header('Content-Type: application/json');
