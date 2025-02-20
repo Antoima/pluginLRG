@@ -94,8 +94,9 @@ function processEmails($emails, $sourceToken, $destinationToken) {
             }
         }
 
+        // Solo procesamos el correo si su estado es 'false'
         if ($emailStatus === true) {
-            $logger->info("Correo ID $emailId ya procesado. Saltando...");
+            $logger->info("Correo ID $emailId ya procesado y enviado. Saltando...");
             continue;  // Salta este correo si ya fue procesado
         }
 
@@ -150,8 +151,9 @@ function sendEmailsToDestination($emails, $sourceToken, $destinationToken) {
             }
         }
 
+        // Solo enviamos el correo si su estado es 'false'
         if ($emailStatus === true) {
-            $logger->info("Correo ID $emailId ya procesado. Omitiendo...");
+            $logger->info("Correo ID $emailId ya procesado y enviado. Omitiendo...");
             continue;  // Salta este correo si ya fue procesado
         }
 
@@ -201,19 +203,16 @@ function sendEmailsToDestination($emails, $sourceToken, $destinationToken) {
                 if (isset($responseData['id'])) {
                     // Si la respuesta tiene un ID de mensaje, entonces fue exitoso
                     $logger->info("Correo enviado exitosamente ID $emailId.");
-                    saveProcessedEmail($emailId, true);  // Marcar como procesado
+                    saveProcessedEmail($emailId, true);  // Marcar como procesado y enviado
                 } else {
                     $logger->warning("Error al enviar correo ID $emailId: " . print_r($responseData, true));
                 }
             }
-
         } else {
             $logger->warning("No se encontró 'raw' para el correo ID: $emailId");
         }
     }
 }
-
-
 
 // Función para manejar el flujo principal de la migración
 function handleMigration($sourceToken, $destinationToken, $sourceEmail, $destinationEmail) {
