@@ -9,7 +9,6 @@ if (empty($sourceToken)) {
     exit();
 }
 
-
 // Obtener tokens desde POST
 $sourceToken = $_POST['accessToken'] ?? null;
 $destinationToken = $_POST['destinationAccessToken'] ?? null;
@@ -44,14 +43,19 @@ try {
     // 1. Obtener correos
     $emails = getEmails($sourceToken);
     $totalEmails = count($emails);
-    
+
+    // Imprimir los correos obtenidos
+    echo "<pre>" . print_r($emails, true) . "</pre>"; // Mostrar los correos obtenidos
+
     // 2. Exportar a .mbox
     $mboxContent = "";
     foreach ($emails as $index => $email) {
         // Actualizar progreso (25%)
         $_SESSION['progress'] = 25 + (($index / $totalEmails) * 25);
         session_write_close();
-        
+
+        echo "Procesando correo: " . print_r($email, true) . "<br>"; // Mostrar correo procesado
+
         $messageId = $email['id'];
         $url = "https://www.googleapis.com/gmail/v1/users/me/messages/$messageId?format=raw";
         $ch = curl_init($url);
@@ -59,14 +63,21 @@ try {
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         $emailData = json_decode(curl_exec($ch), true);
         curl_close($ch);
-        $rawEmail = base64_decode(strtr($emailData['raw'], '-_', '+/'));
-        $mboxContent .= "From - " . date('r') . "\n" . $rawEmail . "\n\n";
+
+        echo "Respuesta de la API para el correo: " . print_r($emailData, true) . "<br>"; // Mostrar respuesta de la API
+
+        if (isset($emailData['raw'])) {
+            $rawEmail = base64_decode(strtr($emailData['raw'], '-_', '+/'));
+            $mboxContent .= "From - " . date('r') . "\n" . $rawEmail . "\n\n";
+        } else {
+            echo "No se encontró 'raw' en la respuesta para el mensaje ID: $messageId<br>";
+        }
     }
 
     // Verificar el contenido antes de escribir
-    error_log("Contenido del archivo de respaldo: " . $mboxContent);
+    echo "Contenido del archivo de respaldo:<br><pre>" . htmlspecialchars($mboxContent) . "</pre>";
 
-
+    // Escribir el archivo de respaldo
     file_put_contents("backup.mbox", $mboxContent);
 
     // 3. Migrar correos
@@ -75,7 +86,7 @@ try {
             // Actualizar progreso (50% + 50%)
             $_SESSION['progress'] = 50 + (($index / $totalEmails) * 50);
             session_write_close();
-            
+
             $messageId = $email['id'];
             $url = "https://www.googleapis.com/gmail/v1/users/me/messages/$messageId?format=raw";
             $ch = curl_init($url);
@@ -83,28 +94,36 @@ try {
             curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
             $emailData = json_decode(curl_exec($ch), true);
             curl_close($ch);
-            $rawEmail = base64_decode(strtr($emailData['raw'], '-_', '+/'));
-            if (empty($rawEmail)) {
-                error_log("Correo vacío para el mensaje: " . print_r($email, true));
+
+            echo "Respuesta de la API para migración: " . print_r($emailData, true) . "<br>"; // Mostrar respuesta de la API
+
+            if (isset($emailData['raw'])) {
+                $rawEmail = base64_decode(strtr($emailData['raw'], '-_', '+/'));
+                if (empty($rawEmail)) {
+                    echo "Correo vacío para el mensaje: " . print_r($email, true) . "<br>";
+                } else {
+                    $mboxContent .= "From - " . date('r') . "\n" . $rawEmail . "\n\n";
+                }
+
+                // Enviar con token de destino
+                $ch = curl_init("https://www.googleapis.com/gmail/v1/users/me/messages/send");
+                curl_setopt($ch, CURLOPT_HTTPHEADER, [
+                    "Authorization: Bearer $destinationToken",
+                    "Content-Type: application/json"
+                ]);
+                curl_setopt($ch, CURLOPT_POST, true);
+                curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode(["raw" => base64_encode($rawEmail)]));
+                curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+                $response = json_decode(curl_exec($ch), true);
+                curl_close($ch);
+
+                echo "Respuesta del envío: " . print_r($response, true) . "<br>"; // Mostrar respuesta del envío
+
+                if (isset($response['error'])) {
+                    throw new Exception("Error al migrar correo: " . $response['error']['message']);
+                }
             } else {
-                $mboxContent .= "From - " . date('r') . "\n" . $rawEmail . "\n\n";
-            }
-            
-
-            // Enviar con token de destino
-            $ch = curl_init("https://www.googleapis.com/gmail/v1/users/me/messages/send");
-            curl_setopt($ch, CURLOPT_HTTPHEADER, [
-                "Authorization: Bearer $destinationToken",
-                "Content-Type: application/json"
-            ]);
-            curl_setopt($ch, CURLOPT_POST, true);
-            curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode(["raw" => base64_encode($rawEmail)]));
-            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-            $response = json_decode(curl_exec($ch), true);
-            curl_close($ch);
-
-            if (isset($response['error'])) {
-                throw new Exception("Error al migrar correo: " . $response['error']['message']);
+                echo "No se encontró 'raw' para migrar el correo con ID: $messageId<br>";
             }
         }
     }
@@ -124,13 +143,9 @@ function getEmails($token) {
     $response = json_decode(curl_exec($ch), true);
     curl_close($ch);
 
-    // Depuración: Imprimir la respuesta de la API
-    if (isset($response['messages'])) {
-        error_log("Emails obtenidos: " . print_r($response['messages'], true));
-    } else {
-        error_log("Error al obtener correos: " . print_r($response, true));
-    }
+    echo "Respuesta de la API para obtener correos: " . print_r($response, true) . "<br>"; // Mostrar respuesta para la obtención de correos
 
     return $response['messages'] ?? [];
 }
+
 ?>
