@@ -40,18 +40,32 @@ $(document).ready(function () {
   // Verificar y renovar el token si es necesario
   async function getValidAccessToken() {
     let accessToken = localStorage.getItem("access_token");
-    const refreshToken = localStorage.getItem("refresh_token");
+    const refreshToken = localStorage.getItem("refresh_token"); // ✅ Definir refreshToken
 
     if (!accessToken) {
       throw new Error("No hay token de acceso disponible.");
     }
 
     try {
-      await getUserInfo(accessToken);
+      // Verificar si el token es válido
+      const userInfo = await fetch(
+        "https://www.googleapis.com/oauth2/v1/userinfo?alt=json",
+        {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+        }
+      );
+
+      if (!userInfo.ok) {
+        throw new Error(`Error ${userInfo.status}: ${userInfo.statusText}`);
+      }
+
       return accessToken;
     } catch (error) {
       console.log("Error al validar token:", error);
 
+      // Si el token ha expirado, renovarlo
       if (refreshToken) {
         const response = await fetch("https://oauth2.googleapis.com/token", {
           method: "POST",
@@ -67,19 +81,13 @@ $(document).ready(function () {
         });
 
         const data = await response.json();
-        if (data.error) throw new Error(data.error);
-
         accessToken = data.access_token;
         localStorage.setItem("access_token", accessToken);
         return accessToken;
       } else {
-        Swal.fire(
-          "Sesión expirada",
-          "Por favor vuelve a autenticarte",
-          "error"
+        throw new Error(
+          "El token ha expirado y no hay refresh_token disponible."
         );
-        localStorage.clear();
-        window.location.reload();
       }
     }
   }
@@ -87,22 +95,20 @@ $(document).ready(function () {
   // En la función que obtiene el correo de origen
   getValidAccessToken()
     .then((accessToken) => {
+      console.log("Token renovado:", accessToken); // ✅ Depuración
       return getUserInfo(accessToken);
     })
     .then((response) => {
+      console.log("Respuesta de Google:", response); // ✅ Depuración
       $("#sourceEmail").val(response.email);
     })
     .catch((error) => {
-      console.error("Error:", error);
-      if (error.message.includes("invalid_grant")) {
-        Swal.fire(
-          "Sesión expirada",
-          "Por favor vuelve a iniciar sesión",
-          "error"
-        );
-        localStorage.clear();
-        window.location.href = "/logout"; // Redirigir a logout
-      }
+      console.error("Error crítico:", error); // ✅ Depuración
+      Swal.fire(
+        "Error",
+        "No se pudo obtener la información del usuario.",
+        "error"
+      );
     });
 
   // Autenticar cuenta de destino
