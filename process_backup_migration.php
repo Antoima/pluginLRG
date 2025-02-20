@@ -152,11 +152,10 @@ curl_close($ch);
 
 // Verificar la respuesta del envío
 if (isset($response['error'])) {
-    $logger->error("Error al migrar correo: " . $response['error']['message']);
+    $logger->error("Error al migrar correo: " . print_r($response, true));
     throw new Exception("Error al migrar correo: " . $response['error']['message']);
-} else {
-    $logger->info("Correo migrado exitosamente a: " . $destinationEmail);
 }
+
 
             } else {
                 $logger->warning("No se encontró 'raw' para migrar el correo con ID: " . $email['id']);
