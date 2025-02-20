@@ -88,8 +88,6 @@ $(document).ready(function () {
     const redirectUri = encodeURIComponent(
       "https://pl.luisguevara.net/auth-destination.php"
     ); // Codificar la URL
-    // const scope = "https://www.googleapis.com/auth/gmail.send";
-    // En dashboard.js, modifica el scope para incluir permisos de lectura:
     const scope =
       "https://www.googleapis.com/auth/gmail.readonly+https://www.googleapis.com/auth/gmail.send";
 
