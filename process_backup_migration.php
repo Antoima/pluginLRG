@@ -108,6 +108,4 @@ function migrateEmails($sourceToken, $destinationToken) {
     echo "Proceso de migración completado.\n";
 }
 
-
-
 ?>
