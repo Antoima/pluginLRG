@@ -83,8 +83,9 @@ try {
         }
         curl_close($ch);
 
-        // Log: Respuesta de la API
-        $logger->info("Respuesta de la API para el correo: " . print_r($emailData, true));
+        // Log adicional de la respuesta
+        $logger->info("Respuesta de la API para el correo ID " . $email['id'] . ": " . 
+            "ID: " . $email['id'] . ", ThreadID: " . $email['threadId']);
 
         if (isset($emailData['raw'])) {
             $rawEmail = base64_decode(strtr($emailData['raw'], '-_', '+/'));
@@ -130,8 +131,9 @@ try {
             }
             curl_close($ch);
 
-            // Log: Respuesta de la API para migración
-            $logger->info("Respuesta de la API para migración del correo ID: " . $email['id']);
+            // **Truncar la respuesta** para migración también
+            $logger->info("Respuesta de la API para migración del correo ID " . $email['id'] . ": " . 
+                "ID: " . $email['id'] . ", ThreadID: " . $email['threadId']);
 
             if (isset($emailData['raw'])) {
                 // Decodificar el contenido 'raw' del correo
@@ -155,13 +157,16 @@ try {
                     curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($emailDataToSend));  // Enviar el correo usando raw
                     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
                     $response = curl_exec($ch);
-                    
+
                     // Verificar si hubo error en la respuesta cURL
                     if (curl_errno($ch)) {
                         $logger->error("Error en cURL al enviar correo: " . curl_error($ch));
                         throw new Exception("Error en cURL al enviar correo: " . curl_error($ch));
                     }
                     
+                    // **Log de la respuesta de la API al enviar el correo**
+                    $logger->info("Respuesta al intentar enviar correo ID " . $email['id'] . ": " . $response);
+
                     $responseData = json_decode($response, true);
                     curl_close($ch);
                     
@@ -210,9 +215,10 @@ function getEmails($token) {
     
     // Log: Respuesta de la API para obtener correos
     global $logger;
-    $logger->info("Respuesta de la API para obtener correos: " . print_r(json_decode($response, true), true));
-
-    $response = json_decode($response, true);
-    return $response['messages'] ?? [];
+    $responseData = json_decode($response, true);
+    $logger->info("Respuesta de la API para obtener correos: " . 
+        "Total de correos: " . count($responseData['messages'] ?? []));
+    
+    return $responseData['messages'] ?? [];
 }
 ?>
