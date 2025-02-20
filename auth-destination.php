@@ -1,5 +1,8 @@
 <?php
 session_start();
+
+// Almacenar el token en la sesión al iniciar sesión
+$_SESSION['access_token'] = $_POST['accessToken'];
 ?>
 <!DOCTYPE html>
 <html>
