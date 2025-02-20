@@ -196,18 +196,23 @@ function sendEmailsToDestination($emails, $sourceToken, $destinationToken) {
             } else {
                 $responseData = json_decode($response, true);
                 $logger->debug("Respuesta completa al enviar correo ID $emailId: " . truncateResponse($responseData));  // Respuesta completa (truncada)
+
+                // Verificar la respuesta y si fue exitosa
+                if (isset($responseData['id'])) {
+                    // Si la respuesta tiene un ID de mensaje, entonces fue exitoso
+                    $logger->info("Correo enviado exitosamente ID $emailId.");
+                    saveProcessedEmail($emailId, true);  // Marcar como procesado
+                } else {
+                    $logger->warning("Error al enviar correo ID $emailId: " . print_r($responseData, true));
+                }
             }
 
-            // No verificamos si hubo un error en la respuesta, solo continuamos
-            $logger->info("Correo enviado exitosamente ID $emailId.");
-
-            // Marcar el correo como procesado y cambiado su estado a 'true'
-            saveProcessedEmail($emailId, true);
         } else {
             $logger->warning("No se encontró 'raw' para el correo ID: $emailId");
         }
     }
 }
+
 
 
 // Función para manejar el flujo principal de la migración
