@@ -107,9 +107,7 @@ $(document).ready(function () {
 
   // Verificar si ya hay token de destino
   if (destinationAccessToken) {
-    $("#destinationEmail")
-      .addClass("authenticated")
-      .val("Cuenta autenticada ✔️");
+    $("#destinationEmail").addClass("authenticated").val(email);
     $("#authDestinationBtn").prop("disabled", true);
   }
 
