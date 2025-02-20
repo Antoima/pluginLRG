@@ -33,9 +33,20 @@ if ($destinationEmail && empty($destinationToken)) {
     exit();
 }
 
-// Asegurarte de que la variable de sesión 'processedEmails' exista
-if (!isset($_SESSION['processedEmails'])) {
-    $_SESSION['processedEmails'] = []; // Inicializa la lista de correos procesados
+// Obtener correos procesados desde archivo JSON
+function getProcessedEmails() {
+    if (file_exists('processed_emails.json')) {
+        $processed = file_get_contents('processed_emails.json');
+        return json_decode($processed, true) ?? [];
+    }
+    return [];
+}
+
+// Guardar los correos procesados en el archivo JSON
+function saveProcessedEmail($emailId) {
+    $processedEmails = getProcessedEmails();
+    $processedEmails[] = $emailId;
+    file_put_contents('processed_emails.json', json_encode($processedEmails));
 }
 
 // Configurar el tipo de contenido como JSON
@@ -57,7 +68,7 @@ try {
     $mboxContent = "";
     foreach ($emails as $index => $email) {
         // Si el correo ya fue procesado, saltamos al siguiente
-        if (in_array($email['id'], $_SESSION['processedEmails'])) {
+        if (in_array($email['id'], getProcessedEmails())) {
             $logger->info("Correo ID " . $email['id'] . " ya procesado. Saltando...");
             continue; // No procesamos este correo, pasamos al siguiente
         }
@@ -95,7 +106,7 @@ try {
         }
 
         // Marcar el correo como procesado
-        $_SESSION['processedEmails'][] = $email['id']; // Guardamos el ID del correo procesado
+        saveProcessedEmail($email['id']); // Guardamos el ID del correo procesado
     }
 
     // Verificar el contenido antes de escribir
@@ -108,7 +119,7 @@ try {
     if ($destinationEmail && $destinationToken) {
         foreach ($emails as $index => $email) {
             // Si el correo ya fue procesado, saltamos al siguiente
-            if (in_array($email['id'], $_SESSION['processedEmails'])) {
+            if (in_array($email['id'], getProcessedEmails())) {
                 $logger->info("Correo ID " . $email['id'] . " ya procesado. Saltando...");
                 continue; // No procesamos este correo, pasamos al siguiente
             }
@@ -177,16 +188,14 @@ try {
                         // Log de éxito
                         $logger->info("Correo ID " . $email['id'] . " migrado exitosamente a la cuenta de destino.");
 
-// Asegurarse de que el correo se haya migrado correctamente antes de marcarlo como procesado
-if ($responseData['error'] ?? null) {
-    $logger->error("Error al migrar correo ID " . $email['id'] . ": " . print_r($responseData['error'], true));
-} else {
-    $logger->info("Correo ID " . $email['id'] . " migrado exitosamente.");
-    $_SESSION['processedEmails'][] = $email['id']; // Marcar como procesado solo si la migración es exitosa
-}
-
+                        // Asegurarse de que el correo se haya migrado correctamente antes de marcarlo como procesado
+                        if ($responseData['error'] ?? null) {
+                            $logger->error("Error al migrar correo ID " . $email['id'] . ": " . print_r($responseData['error'], true));
+                        } else {
+                            $logger->info("Correo ID " . $email['id'] . " migrado exitosamente.");
+                            saveProcessedEmail($email['id']); // Marcar como procesado solo si la migración es exitosa
+                        }
                     }
-                    
                 }
             } else {
                 $logger->warning("No se encontró 'raw' para migrar el correo con ID: " . $email['id']);
