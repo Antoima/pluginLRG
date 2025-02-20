@@ -5,7 +5,8 @@ $(document).ready(function () {
   // Escuchar mensajes desde auth-destination.php
   window.addEventListener("message", (event) => {
     if (event.data.action === "destinationAuthenticated") {
-      $("#destinationEmail").addClass("authenticated").val(event.data.email); // Mostrar el correo electrónico
+      const email = event.data.email;
+      $("#destinationEmail").addClass("authenticated").val(email);
       $("#authDestinationBtn").prop("disabled", true).text("Autenticado");
       localStorage.setItem("destination_access_token", event.data.accessToken);
 
@@ -13,7 +14,7 @@ $(document).ready(function () {
       Swal.fire({
         icon: "success",
         title: "Autenticación exitosa",
-        text: `Cuenta ${event.data.email} autenticada correctamente.`,
+        text: `Cuenta ${email} autenticada correctamente.`,
         timer: 3000,
         showConfirmButton: false,
       });
