@@ -42,9 +42,20 @@ function makeApiRequest($url, $token) {
         $logger->error("Error en cURL: " . curl_error($ch));
         throw new Exception("Error en cURL: " . curl_error($ch));
     }
+    
     curl_close($ch);
     
-    return json_decode($response, true);
+    $responseData = json_decode($response, true);
+    
+    // Depuración adicional: Logueamos la respuesta de la API
+    global $logger;
+    if ($responseData === null) {
+        $logger->error("Respuesta de la API no válida: " . $response);
+    } else {
+        $logger->debug("Respuesta de la API: " . print_r($responseData, true));
+    }
+    
+    return $responseData;
 }
 
 // Función para obtener los correos de Gmail
@@ -167,16 +178,19 @@ function sendEmailsToDestination($emails, $sourceToken, $destinationToken) {
 function handleMigration($sourceToken, $destinationToken, $sourceEmail, $destinationEmail) {
     global $logger;
 
-    // Verificar el token de destino
-    if ($destinationEmail && $destinationToken) {
-        try {
-            checkDestinationToken($destinationToken); // Verificar que el token de destino sea válido
+    // Verificar los tokens antes de continuar
+    try {
+        checkSourceToken($sourceToken); // Verificar token de origen
+        $logger->info("Token de origen verificado con éxito.");
+        
+        if ($destinationEmail && $destinationToken) {
+            checkDestinationToken($destinationToken); // Verificar token de destino
             $logger->info("Token de destino verificado con éxito.");
-        } catch (Exception $e) {
-            $logger->error("Error al verificar token de destino: " . $e->getMessage());
-            echo json_encode(["status" => "error", "message" => "Error al verificar el token de destino."]);
-            exit();
         }
+    } catch (Exception $e) {
+        $logger->error("Error al verificar tokens: " . $e->getMessage());
+        echo json_encode(["status" => "error", "message" => "Error al verificar los tokens."]);
+        exit();
     }
 
     // Obtener los correos de la cuenta de origen
@@ -198,17 +212,32 @@ function handleMigration($sourceToken, $destinationToken, $sourceEmail, $destina
     echo json_encode(["status" => "success", "message" => "Proceso completado."]);
 }
 
-// Verificar si el token de destino es válido
+// Función para verificar el token de destino
 function checkDestinationToken($destinationToken) {
     global $logger;
-
     $url = "https://www.googleapis.com/gmail/v1/users/me/profile";
     $response = makeApiRequest($url, $destinationToken);
     
-    // Si hay un error, el token es inválido
+    // Si hay un error, el token de destino es inválido
     if (isset($response['error'])) {
         $logger->error("Error en el token de destino: " . print_r($response, true));
         throw new Exception("Error en el token de destino.");
+    }
+
+    return $response;
+}
+
+
+// Función para verificar el token de origen
+function checkSourceToken($sourceToken) {
+    global $logger;
+    $url = "https://www.googleapis.com/gmail/v1/users/me/profile";
+    $response = makeApiRequest($url, $sourceToken);
+
+    // Si hay un error, el token de origen es inválido
+    if (isset($response['error'])) {
+        $logger->error("Error en el token de origen: " . print_r($response, true));
+        throw new Exception("Error en el token de origen.");
     }
 
     return $response;
