@@ -21,7 +21,12 @@ $googleClientId = $config['google_client_id'];
     <style>
         .container { margin-top: 50px; }
         .form-group { margin-bottom: 20px; }
-        .progress { margin-top: 20px; display: none; }
+        /* Se eliminó la barra de progreso */
+        .spinner-container {
+            display: none;
+            text-align: center;
+            margin-top: 30px;
+        }
         .authenticated {
             border: 2px solid #28a745 !important;
             background-color: #f8fff9 !important;
@@ -37,21 +42,25 @@ $googleClientId = $config['google_client_id'];
                 <input type="email" class="form-control" id="sourceEmail" name="sourceEmail" required readonly>
             </div>
             <div class="form-group">
-    <label for="destinationEmail">Destination Email Account (Migrate to) (Optional)</label>
-    <div class="input-group">
-        <input type="email" class="form-control" id="destinationEmail" name="destinationEmail" readonly>
-        <div class="input-group-append">
-            <button type="button" id="authDestinationBtn" class="btn btn-primary">
-                Autenticar
-            </button>
-        </div>
-    </div>
-</div>
+                <label for="destinationEmail">Destination Email Account (Migrate to) (Optional)</label>
+                <div class="input-group">
+                    <input type="email" class="form-control" id="destinationEmail" name="destinationEmail" readonly>
+                    <div class="input-group-append">
+                        <button type="button" id="authDestinationBtn" class="btn btn-primary">
+                            Autenticar
+                        </button>
+                    </div>
+                </div>
+            </div>
             <button type="submit" class="btn btn-primary btn-block">Start Backup/Migration</button>
         </form>
 
-        <div class="progress">
-            <div class="progress-bar" role="progressbar" style="width: 0%;">0%</div>
+        <!-- Spinner de carga (se mostrará mientras se procesa el respaldo/migración) -->
+        <div id="spinner-container" class="spinner-container">
+            <div class="spinner-border text-primary" role="status">
+                <span class="sr-only">Cargando...</span>
+            </div>
+            <p>Procesando... Esto puede tardar un momento.</p>
         </div>
 
         <div id="downloadBackup" class="text-center mt-4" style="display: none;">
@@ -64,5 +73,25 @@ $googleClientId = $config['google_client_id'];
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.4.20/dist/sweetalert2.all.min.js"></script>
     <script src="src/js/dashboard.js"></script>
+
+    <script>
+        // Mostrar el spinner cuando el formulario sea enviado
+        $('#backupMigrationForm').submit(function(event) {
+            event.preventDefault();  // Evitar el envío del formulario
+
+            // Mostrar el spinner
+            $('#spinner-container').show();
+
+            // Aquí va el código para hacer el procesamiento de respaldo/migración
+
+            // Simular un proceso largo (reemplaza esto con tu lógica real)
+            setTimeout(function() {
+                // Ocultar el spinner después de completar el proceso
+                $('#spinner-container').hide();
+                // Mostrar el botón de descarga de respaldo
+                $('#downloadBackup').show();
+            }, 5000);  // 5 segundos de espera (simulando proceso largo)
+        });
+    </script>
 </body>
 </html>
