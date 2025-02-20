@@ -5,6 +5,12 @@ $(document).ready(function () {
   // Escuchar mensajes desde auth-destination.php
   window.addEventListener("message", (event) => {
     if (event.data.action === "destinationAuthenticated") {
+      // Verificar si ya hay token de destino
+      if (destinationAccessToken) {
+        $("#destinationEmail").addClass("authenticated").val(email);
+        $("#authDestinationBtn").prop("disabled", true);
+      }
+
       const email = event.data.email;
       $("#destinationEmail").addClass("authenticated").val(email);
       $("#authDestinationBtn").prop("disabled", true).text("Autenticado");
@@ -104,12 +110,6 @@ $(document).ready(function () {
 
     window.open(authUrl, "authPopup", "width=600,height=600");
   });
-
-  // Verificar si ya hay token de destino
-  if (destinationAccessToken) {
-    $("#destinationEmail").addClass("authenticated").val(email);
-    $("#authDestinationBtn").prop("disabled", true);
-  }
 
   // Enviar formulario
   $("#backupMigrationForm").on("submit", function (e) {
