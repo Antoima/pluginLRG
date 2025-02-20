@@ -123,6 +123,13 @@ $(document).ready(function () {
       return;
     }
 
+    // Verificar que los tokens no sean nulos
+    const accessToken = localStorage.getItem("access_token");
+    if (!accessToken) {
+      Swal.fire("Error", "No se encontró el token de acceso.", "error");
+      return;
+    }
+
     $(".progress").show();
     const progressBar = $(".progress-bar");
 
@@ -137,7 +144,7 @@ $(document).ready(function () {
     const formData = {
       sourceEmail: $("#sourceEmail").val(),
       destinationEmail: destinationEmail,
-      accessToken: localStorage.getItem("access_token"), // Token de la cuenta de origen
+      accessToken: accessToken, // Token de la cuenta de origen
       destinationAccessToken: destinationAccessToken, // Token de la cuenta de destino
     };
 
