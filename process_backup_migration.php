@@ -4,6 +4,40 @@ require_once 'log.php'; // Asegúrate de que la ruta es correcta
 
 session_start(); // Asegúrate de que la sesión esté iniciada
 
+// Función para obtener los correos procesados desde el archivo JSON
+function getProcessedEmails() {
+    // Verificamos si el archivo existe
+    if (file_exists('processed_emails.json')) {
+        $processed = file_get_contents('processed_emails.json');
+        // Decodificamos el JSON, si no se puede decodificar, devolvemos un arreglo vacío
+        return json_decode($processed, true) ?? [];
+    }
+    return []; // Si no existe el archivo, devolvemos un arreglo vacío
+}
+
+// Función para guardar un correo procesado en el archivo JSON
+function saveProcessedEmail($emailId) {
+    // Obtener los correos procesados actuales
+    $processedEmails = getProcessedEmails();
+    
+    // Si el correo ya está en el arreglo, no lo agregamos nuevamente
+    if (!in_array($emailId, $processedEmails)) {
+        $processedEmails[] = $emailId;
+    }
+    
+    // Guardamos los correos procesados en el archivo JSON
+    file_put_contents('processed_emails.json', json_encode($processedEmails));
+}
+
+// Asegurarnos de que el archivo se lee correctamente
+function logProcessedEmails() {
+    $processedEmails = getProcessedEmails();
+    global $logger;
+    $logger->info("Correos procesados: " . count($processedEmails) . " emails.");
+}
+
+header('Content-Type: application/json'); // Configurar el tipo de contenido como JSON
+
 // Validar token desde POST (no sesión)
 $sourceToken = $_POST['accessToken'] ?? null;
 if (empty($sourceToken)) {
@@ -33,20 +67,9 @@ if ($destinationEmail && empty($destinationToken)) {
     exit();
 }
 
-// Obtener correos procesados desde archivo JSON
-function getProcessedEmails() {
-    if (file_exists('processed_emails.json')) {
-        $processed = file_get_contents('processed_emails.json');
-        return json_decode($processed, true) ?? [];
-    }
-    return [];
-}
-
-// Guardar los correos procesados en el archivo JSON
-function saveProcessedEmail($emailId) {
-    $processedEmails = getProcessedEmails();
-    $processedEmails[] = $emailId;
-    file_put_contents('processed_emails.json', json_encode($processedEmails));
+// Asegurarte de que la variable de sesión 'processedEmails' exista
+if (!isset($_SESSION['processedEmails'])) {
+    $_SESSION['processedEmails'] = []; // Inicializa la lista de correos procesados
 }
 
 // Configurar el tipo de contenido como JSON
@@ -67,9 +90,11 @@ try {
     // 2. Exportar a .mbox
     $mboxContent = "";
     foreach ($emails as $index => $email) {
+        $emailId = $email['id'];
+
         // Si el correo ya fue procesado, saltamos al siguiente
-        if (in_array($email['id'], getProcessedEmails())) {
-            $logger->info("Correo ID " . $email['id'] . " ya procesado. Saltando...");
+        if (in_array($emailId, getProcessedEmails())) {
+            $logger->info("Correo ID $emailId ya procesado. Saltando...");
             continue; // No procesamos este correo, pasamos al siguiente
         }
 
@@ -78,9 +103,9 @@ try {
         session_write_close();
 
         // Log: Procesando correo
-        $logger->info("Procesando correo ID: " . $email['id']);
+        $logger->info("Procesando correo ID: $emailId");
 
-        $messageId = $email['id'];
+        $messageId = $emailId;
         $url = "https://www.googleapis.com/gmail/v1/users/me/messages/$messageId?format=raw";
         $ch = curl_init($url);
         curl_setopt($ch, CURLOPT_HTTPHEADER, ["Authorization: Bearer $sourceToken"]);
@@ -95,8 +120,7 @@ try {
         curl_close($ch);
 
         // Log adicional de la respuesta
-        $logger->info("Respuesta de la API para el correo ID " . $email['id'] . ": " . 
-            "ID: " . $email['id'] . ", ThreadID: " . $email['threadId']);
+        $logger->info("Respuesta de la API para el correo ID $emailId: ID: $emailId, ThreadID: " . $email['threadId']);
 
         if (isset($emailData['raw'])) {
             $rawEmail = base64_decode(strtr($emailData['raw'], '-_', '+/'));
@@ -106,7 +130,7 @@ try {
         }
 
         // Marcar el correo como procesado
-        saveProcessedEmail($email['id']); // Guardamos el ID del correo procesado
+        saveProcessedEmail($emailId); // Guardamos el ID del correo procesado
     }
 
     // Verificar el contenido antes de escribir
@@ -118,9 +142,11 @@ try {
     // 3. Migrar correos
     if ($destinationEmail && $destinationToken) {
         foreach ($emails as $index => $email) {
+            $emailId = $email['id'];
+
             // Si el correo ya fue procesado, saltamos al siguiente
-            if (in_array($email['id'], getProcessedEmails())) {
-                $logger->info("Correo ID " . $email['id'] . " ya procesado. Saltando...");
+            if (in_array($emailId, getProcessedEmails())) {
+                $logger->info("Correo ID $emailId ya procesado. Saltando...");
                 continue; // No procesamos este correo, pasamos al siguiente
             }
 
@@ -128,7 +154,7 @@ try {
             $_SESSION['progress'] = 50 + (($index / $totalEmails) * 50);
             session_write_close();
 
-            $messageId = $email['id'];
+            $messageId = $emailId;
             $url = "https://www.googleapis.com/gmail/v1/users/me/messages/$messageId?format=raw";
             $ch = curl_init($url);
             curl_setopt($ch, CURLOPT_HTTPHEADER, ["Authorization: Bearer $sourceToken"]);
@@ -143,8 +169,7 @@ try {
             curl_close($ch);
 
             // **Truncar la respuesta** para migración también
-            $logger->info("Respuesta de la API para migración del correo ID " . $email['id'] . ": " . 
-                "ID: " . $email['id'] . ", ThreadID: " . $email['threadId']);
+            $logger->info("Respuesta de la API para migración del correo ID $emailId: ID: $emailId, ThreadID: " . $email['threadId']);
 
             if (isset($emailData['raw'])) {
                 // Decodificar el contenido 'raw' del correo
@@ -174,68 +199,30 @@ try {
                         $logger->error("Error en cURL al enviar correo: " . curl_error($ch));
                         throw new Exception("Error en cURL al enviar correo: " . curl_error($ch));
                     }
-                    
+
                     // **Log de la respuesta de la API al enviar el correo**
-                    $logger->info("Respuesta al intentar enviar correo ID " . $email['id'] . ": " . $response);
+                    $logger->info("Respuesta al intentar enviar correo ID $emailId: " . $response);
 
                     $responseData = json_decode($response, true);
                     curl_close($ch);
-                    
+
                     if (isset($responseData['error'])) {
                         $logger->error("Error al migrar correo: " . print_r($responseData, true));
-                        throw new Exception("Error al migrar correo: " . $responseData['error']['message']);
-                    } else {
-                        // Log de éxito
-                        $logger->info("Correo ID " . $email['id'] . " migrado exitosamente a la cuenta de destino.");
-
-                        // Asegurarse de que el correo se haya migrado correctamente antes de marcarlo como procesado
-                        if ($responseData['error'] ?? null) {
-                            $logger->error("Error al migrar correo ID " . $email['id'] . ": " . print_r($responseData['error'], true));
-                        } else {
-                            $logger->info("Correo ID " . $email['id'] . " migrado exitosamente.");
-                            saveProcessedEmail($email['id']); // Marcar como procesado solo si la migración es exitosa
-                        }
+                        throw new Exception("Error al migrar correo: " . print_r($responseData, true));
                     }
                 }
-            } else {
-                $logger->warning("No se encontró 'raw' para migrar el correo con ID: " . $email['id']);
             }
-
         }
     }
 
+    // Log de progreso y finalización
+    $_SESSION['progress'] = 100; // Completo
+    session_write_close(); // Guardar el estado de progreso final
     $logger->info("Proceso completado exitosamente.");
     echo json_encode(["status" => "success", "message" => "Proceso completado."]);
-
 } catch (Exception $e) {
-    // Log: Excepción
+    // Manejo de excepciones
     $logger->error("Excepción capturada: " . $e->getMessage());
     echo json_encode(["status" => "error", "message" => $e->getMessage()]);
-}
-
-// Funciones
-function getEmails($token) {
-    $url = "https://www.googleapis.com/gmail/v1/users/me/messages";
-    $ch = curl_init($url);
-    curl_setopt($ch, CURLOPT_HTTPHEADER, ["Authorization: Bearer $token"]);
-    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-    $response = curl_exec($ch);
-
-    // Verificar si hubo error en la respuesta cURL
-    if (curl_errno($ch)) {
-        global $logger;
-        $logger->error("Error en cURL al obtener correos: " . curl_error($ch));
-        throw new Exception("Error en cURL al obtener correos: " . curl_error($ch));
-    }
-
-    curl_close($ch);
-    
-    // Log: Respuesta de la API para obtener correos
-    global $logger;
-    $responseData = json_decode($response, true);
-    $logger->info("Respuesta de la API para obtener correos: " . 
-        "Total de correos: " . count($responseData['messages'] ?? []));
-    
-    return $responseData['messages'] ?? [];
 }
 ?>
