@@ -1,10 +1,13 @@
 <?php
-// process_backup_migration.php
+// Incluir el archivo de configuración del log
+require_once 'log.php'; // Asegúrate de que la ruta es correcta
 
 // ✅ Validar token desde POST (no sesión)
 $sourceToken = $_POST['accessToken'] ?? null;
 
 if (empty($sourceToken)) {
+    // Log error
+    $logger->error("Token no proporcionado.");
     echo json_encode(["status" => "error", "message" => "Token no proporcionado."]);
     exit();
 }
@@ -17,23 +20,21 @@ $destinationEmail = $_POST['destinationEmail'];
 
 // Validar tokens
 if (empty($sourceToken)) {
+    // Log error
+    $logger->error("Token de origen no proporcionado.");
     echo json_encode(["status" => "error", "message" => "Token de origen no proporcionado."]);
     exit();
 }
 
 if ($destinationEmail && empty($destinationToken)) {
+    // Log error
+    $logger->error("Token de destino no proporcionado.");
     echo json_encode(["status" => "error", "message" => "Token de destino no proporcionado."]);
     exit();
 }
 
 // Configurar el tipo de contenido como JSON
 header('Content-Type: application/json');
-
-// Obtener datos POST
-$sourceToken = $_POST['accessToken'];
-$destinationToken = $_POST['destinationAccessToken'] ?? null;
-$sourceEmail = $_POST['sourceEmail'];
-$destinationEmail = $_POST['destinationEmail'];
 
 // Inicializar sesión para progreso
 $_SESSION['progress'] = 0;
@@ -44,8 +45,8 @@ try {
     $emails = getEmails($sourceToken);
     $totalEmails = count($emails);
 
-    // Imprimir los correos obtenidos
-    echo "<pre>" . print_r($emails, true) . "</pre>"; // Mostrar los correos obtenidos
+    // Log: Correos obtenidos
+    $logger->info("Correos obtenidos: " . count($emails));
 
     // 2. Exportar a .mbox
     $mboxContent = "";
@@ -54,7 +55,8 @@ try {
         $_SESSION['progress'] = 25 + (($index / $totalEmails) * 25);
         session_write_close();
 
-        echo "Procesando correo: " . print_r($email, true) . "<br>"; // Mostrar correo procesado
+        // Log: Procesando correo
+        $logger->info("Procesando correo ID: " . $email['id']);
 
         $messageId = $email['id'];
         $url = "https://www.googleapis.com/gmail/v1/users/me/messages/$messageId?format=raw";
@@ -64,18 +66,19 @@ try {
         $emailData = json_decode(curl_exec($ch), true);
         curl_close($ch);
 
-        echo "Respuesta de la API para el correo: " . print_r($emailData, true) . "<br>"; // Mostrar respuesta de la API
+        // Log: Respuesta de la API
+        $logger->info("Respuesta de la API para el correo: " . print_r($emailData, true));
 
         if (isset($emailData['raw'])) {
             $rawEmail = base64_decode(strtr($emailData['raw'], '-_', '+/'));
             $mboxContent .= "From - " . date('r') . "\n" . $rawEmail . "\n\n";
         } else {
-            echo "No se encontró 'raw' en la respuesta para el mensaje ID: $messageId<br>";
+            $logger->warning("No se encontró 'raw' en la respuesta para el mensaje ID: $messageId");
         }
     }
 
     // Verificar el contenido antes de escribir
-    echo "Contenido del archivo de respaldo:<br><pre>" . htmlspecialchars($mboxContent) . "</pre>";
+    $logger->info("Contenido del archivo de respaldo generado.");
 
     // Escribir el archivo de respaldo
     file_put_contents("backup.mbox", $mboxContent);
@@ -83,7 +86,7 @@ try {
     // 3. Migrar correos
     if ($destinationEmail && $destinationToken) {
         foreach ($emails as $index => $email) {
-            // Actualizar progreso (50% + 50%)
+            // Actualizar progreso (50%)
             $_SESSION['progress'] = 50 + (($index / $totalEmails) * 50);
             session_write_close();
 
@@ -95,12 +98,13 @@ try {
             $emailData = json_decode(curl_exec($ch), true);
             curl_close($ch);
 
-            echo "Respuesta de la API para migración: " . print_r($emailData, true) . "<br>"; // Mostrar respuesta de la API
+            // Log: Respuesta de la API para migración
+            $logger->info("Respuesta de la API para migración del correo ID: " . $email['id']);
 
             if (isset($emailData['raw'])) {
                 $rawEmail = base64_decode(strtr($emailData['raw'], '-_', '+/'));
                 if (empty($rawEmail)) {
-                    echo "Correo vacío para el mensaje: " . print_r($email, true) . "<br>";
+                    $logger->warning("Correo vacío para el mensaje: " . print_r($email, true));
                 } else {
                     $mboxContent .= "From - " . date('r') . "\n" . $rawEmail . "\n\n";
                 }
@@ -117,20 +121,25 @@ try {
                 $response = json_decode(curl_exec($ch), true);
                 curl_close($ch);
 
-                echo "Respuesta del envío: " . print_r($response, true) . "<br>"; // Mostrar respuesta del envío
+                // Log: Respuesta del envío
+                $logger->info("Respuesta del envío: " . print_r($response, true));
 
                 if (isset($response['error'])) {
+                    $logger->error("Error al migrar correo: " . $response['error']['message']);
                     throw new Exception("Error al migrar correo: " . $response['error']['message']);
                 }
             } else {
-                echo "No se encontró 'raw' para migrar el correo con ID: $messageId<br>";
+                $logger->warning("No se encontró 'raw' para migrar el correo con ID: $messageId");
             }
         }
     }
 
+    $logger->info("Proceso completado exitosamente.");
     echo json_encode(["status" => "success", "message" => "Proceso completado."]);
 
 } catch (Exception $e) {
+    // Log: Excepción
+    $logger->error("Excepción capturada: " . $e->getMessage());
     echo json_encode(["status" => "error", "message" => $e->getMessage()]);
 }
 
@@ -143,9 +152,10 @@ function getEmails($token) {
     $response = json_decode(curl_exec($ch), true);
     curl_close($ch);
 
-    echo "Respuesta de la API para obtener correos: " . print_r($response, true) . "<br>"; // Mostrar respuesta para la obtención de correos
+    // Log: Respuesta de la API para obtener correos
+    global $logger;
+    $logger->info("Respuesta de la API para obtener correos: " . print_r($response, true));
 
     return $response['messages'] ?? [];
 }
-
 ?>
