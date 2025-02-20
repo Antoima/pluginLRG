@@ -108,4 +108,15 @@ function migrateEmails($sourceToken, $destinationToken) {
     echo "Proceso de migración completado.\n";
 }
 
+// Aquí se ejecuta la migración
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $sourceToken = $_POST['sourceAccessToken'] ?? null;
+    $destinationToken = $_POST['destinationAccessToken'] ?? null;
+
+    if ($sourceToken && $destinationToken) {
+        migrateEmails($sourceToken, $destinationToken);
+    } else {
+        echo "Faltan tokens de acceso para la migración.";
+    }
+}
 ?>
