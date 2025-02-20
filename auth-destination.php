@@ -1,26 +1,31 @@
 <?php
 session_start();
-
-if (isset($_GET['access_token'])) {
-    // Almacenar el token de destino en localStorage vía JavaScript
-    echo "<script>
+?>
+<!DOCTYPE html>
+<html>
+<body>
+<script>
+    // Extraer parámetros del hash de la URL
     const hash = window.location.hash.substring(1);
     const params = new URLSearchParams(hash);
     const accessToken = params.get('access_token');
-    
-    if (accessToken && window.opener) {
+    const error = params.get('error');
+
+    if (error) {
+        window.opener.postMessage({
+            action: 'authError',
+            error: error
+        }, '*');
+        window.close();
+    } else if (accessToken && window.opener) {
         window.opener.postMessage({
             action: 'destinationAuthenticated',
             accessToken: accessToken
         }, '*');
         window.close();
     } else {
-        document.write('Error: Token no recibido.');
+        document.write('Error: Parámetros de autenticación no válidos.');
     }
-</script>";
-    exit();
-}
-
-if (isset($_GET['error'])) {
-    die("Error de autenticación: " . $_GET['error']);
-}
+</script>
+</body>
+</html>

@@ -84,16 +84,17 @@ $(document).ready(function () {
 
   // Autenticar cuenta de destino
   $("#authDestinationBtn").click(() => {
-    const clientId = "<?php echo $googleClientId; ?>"; // Usar el client_id desde PHP
-    const redirectUri = encodeURIComponent(
-      "https://pl.luisguevara.net/auth-destination.php"
-    ); // Codificar la URL
-    const scope =
-      "https://www.googleapis.com/auth/gmail.readonly+https://www.googleapis.com/auth/gmail.send";
+    const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?
+        client_id=${GOOGLE_CLIENT_ID}&
+        redirect_uri=${encodeURIComponent(
+          "https://pl.luisguevara.net/auth-destination.php"
+        )}&
+        response_type=token&
+        scope=https://www.googleapis.com/auth/gmail.send&
+        state=destination&
+        prompt=select_account`.replace(/\s+/g, "");
 
-    // Construir la URL sin saltos de línea ni espacios
-    const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${GOOGLE_CLIENT_ID}&redirect_uri=${REDIRECT_URI}&response_type=token&scope=https://www.googleapis.com/auth/gmail.send&state=destination&prompt=select_account`;
-    window.open(authUrl, "authPopup", "width=600,height=600"); // Abrir en popup
+    window.open(authUrl, "authPopup", "width=600,height=600");
   });
 
   // Verificar si ya hay token de destino
@@ -144,5 +145,10 @@ $(document).ready(function () {
         Swal.fire("Error", "Error de conexión con el servidor.", "error");
       },
     });
+  });
+  window.addEventListener("message", (event) => {
+    if (event.data.action === "authError") {
+      Swal.fire("Error de autenticación", event.data.error, "error");
+    }
   });
 });
