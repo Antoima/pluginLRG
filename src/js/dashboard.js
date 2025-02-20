@@ -5,11 +5,18 @@ $(document).ready(function () {
   // Escuchar mensajes desde auth-destination.php
   window.addEventListener("message", (event) => {
     if (event.data.action === "destinationAuthenticated") {
-      $("#destinationEmail")
-        .addClass("authenticated")
-        .val("Cuenta autenticada ✔️");
+      $("#destinationEmail").addClass("authenticated").val(event.data.email); // Mostrar el correo electrónico
       $("#authDestinationBtn").prop("disabled", true).text("Autenticado");
       localStorage.setItem("destination_access_token", event.data.accessToken);
+
+      // Mostrar notificación con SweetAlert2
+      Swal.fire({
+        icon: "success",
+        title: "Autenticación exitosa",
+        text: `Cuenta ${event.data.email} autenticada correctamente.`,
+        timer: 3000,
+        showConfirmButton: false,
+      });
     }
   });
 
@@ -109,6 +116,9 @@ $(document).ready(function () {
   $("#backupMigrationForm").on("submit", function (e) {
     e.preventDefault();
     const destinationEmail = $("#destinationEmail").val();
+    const destinationAccessToken = localStorage.getItem(
+      "destination_access_token"
+    );
 
     if (destinationEmail && !destinationAccessToken) {
       Swal.fire("Error", "Primero autentica la cuenta de destino.", "error");
@@ -125,10 +135,18 @@ $(document).ready(function () {
       });
     }, 1000);
 
+    // Enviar el token de acceso en los datos del formulario
+    const formData = {
+      sourceEmail: $("#sourceEmail").val(),
+      destinationEmail: destinationEmail,
+      accessToken: localStorage.getItem("access_token"), // Token de la cuenta de origen
+      destinationAccessToken: destinationAccessToken, // Token de la cuenta de destino
+    };
+
     $.ajax({
       url: "process_backup_migration.php",
       type: "POST",
-      data: $(this).serialize(),
+      data: formData,
       success: (response) => {
         clearInterval(checkProgress);
         progressBar.css("width", "100%").text("100%");

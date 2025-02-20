@@ -7,6 +7,23 @@ if (!isset($_SESSION['access_token'])) {
     exit();
 }
 
+// Obtener tokens
+$sourceToken = $_POST['accessToken'] ?? null;
+$destinationToken = $_POST['destinationAccessToken'] ?? null;
+$sourceEmail = $_POST['sourceEmail'];
+$destinationEmail = $_POST['destinationEmail'];
+
+// Validar tokens
+if (empty($sourceToken)) {
+    echo json_encode(["status" => "error", "message" => "Token de origen no proporcionado."]);
+    exit();
+}
+
+if ($destinationEmail && empty($destinationToken)) {
+    echo json_encode(["status" => "error", "message" => "Token de destino no proporcionado."]);
+    exit();
+}
+
 // Configurar el tipo de contenido como JSON
 header('Content-Type: application/json');
 
