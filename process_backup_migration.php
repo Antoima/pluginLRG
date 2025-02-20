@@ -111,10 +111,10 @@ function processEmails($emails, $sourceToken, $destinationToken) {
 // Función para enviar los correos procesados al destino
 function sendEmailsToDestination($emails, $sourceToken, $destinationToken) {
     global $logger;
-    
+
     foreach ($emails as $index => $email) {
         $emailId = $email['id'];
-        
+
         // Verificar si el correo ya ha sido procesado
         if (in_array($emailId, getProcessedEmails())) {
             $logger->info("Correo ID $emailId ya procesado. Saltando...");
@@ -128,17 +128,20 @@ function sendEmailsToDestination($emails, $sourceToken, $destinationToken) {
 
         // Obtener el contenido del correo
         $emailData = makeApiRequest("https://www.googleapis.com/gmail/v1/users/me/messages/$emailId?format=raw", $sourceToken);
-        
+
+        // Verificar si 'raw' existe en los datos de la respuesta
         if (isset($emailData['raw'])) {
-            // El 'raw' contiene los datos codificados en base64, lo que está bien
+            // Decodificar el correo (base64)
             $rawEmail = base64_decode(strtr($emailData['raw'], '-_', '+/'));
 
             // Crear el objeto para enviar el correo
-            $emailDataToSend = ["raw" => base64_encode($rawEmail)];
+            $emailDataToSend = [
+                "raw" => base64_encode($rawEmail)  // Asegúrate de que esté correctamente codificado para el envío
+            ];
 
-            // Log para ver los datos que estamos enviando a la API
+            // Log para ver los datos que estamos enviando a la API (truncada)
             $logger->debug("URL de solicitud para enviar correo: https://www.googleapis.com/gmail/v1/users/me/messages/send");
-            $logger->debug("Enviando datos del correo ID $emailId: " . print_r($emailDataToSend, true));  // Datos del correo
+            $logger->debug("Enviando datos del correo ID $emailId: " . truncateResponse($emailDataToSend));
 
             // Enviar el correo a la cuenta de destino
             $ch = curl_init("https://www.googleapis.com/gmail/v1/users/me/messages/send");
@@ -158,7 +161,7 @@ function sendEmailsToDestination($emails, $sourceToken, $destinationToken) {
                 $logger->error("Error en cURL al enviar correo ID $emailId: " . curl_error($ch));
             } else {
                 $responseData = json_decode($response, true);
-                $logger->debug("Respuesta completa al enviar correo ID $emailId: " . print_r($responseData, true));  // Respuesta completa
+                $logger->debug("Respuesta completa al enviar correo ID $emailId: " . truncateResponse($responseData));  // Respuesta completa (truncada)
             }
 
             // Comprobamos si hubo un error en la respuesta
