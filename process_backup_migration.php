@@ -24,6 +24,8 @@ function saveProcessedEmail($emailId) {
     if (!in_array($emailId, $processedEmails)) {
         $processedEmails[] = $emailId;
         file_put_contents('processed_emails.json', json_encode($processedEmails));
+        global $logger;
+        $logger->info("Correo ID $emailId marcado como procesado.");
     }
 }
 
@@ -134,9 +136,9 @@ function sendEmailsToDestination($emails, $sourceToken, $destinationToken) {
             // Solicitar respuesta cURL
             $response = curl_exec($ch);
 
-            // Log para ver la respuesta completa de la API
+            // Verifica si cURL tiene algún error
             if ($response === false) {
-                $logger->error("Error en cURL al enviar correo: " . curl_error($ch));
+                $logger->error("Error en cURL al enviar correo ID $emailId: " . curl_error($ch));
             } else {
                 $responseData = json_decode($response, true);
                 $logger->debug("Respuesta completa al enviar correo ID $emailId: " . print_r($responseData, true));  // Respuesta completa
@@ -144,8 +146,8 @@ function sendEmailsToDestination($emails, $sourceToken, $destinationToken) {
 
             // Comprobamos si hubo un error en la respuesta
             if (curl_errno($ch)) {
-                $logger->error("Error en cURL al enviar correo: " . curl_error($ch));
-                throw new Exception("Error en cURL al enviar correo: " . curl_error($ch));
+                $logger->error("Error en cURL al enviar correo ID $emailId: " . curl_error($ch));
+                throw new Exception("Error en cURL al enviar correo ID $emailId: " . curl_error($ch));
             }
 
             if (isset($responseData['error'])) {
@@ -153,7 +155,8 @@ function sendEmailsToDestination($emails, $sourceToken, $destinationToken) {
                 throw new Exception("Error al migrar correo ID $emailId: " . print_r($responseData, true));
             }
 
-            $logger->info("Correo enviado exitosamente ID $emailId: " . $response);
+            $logger->info("Correo enviado exitosamente ID $emailId.");
+            saveProcessedEmail($emailId);  // Marcar como procesado solo después de que se haya enviado
         } else {
             $logger->warning("No se encontró 'raw' para el correo ID: $emailId");
         }
