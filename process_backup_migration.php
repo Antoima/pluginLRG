@@ -155,22 +155,22 @@ try {
                     curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($emailDataToSend));  // Enviar el correo usando raw
                     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
                     $response = curl_exec($ch);
-
+                    
                     // Verificar si hubo error en la respuesta cURL
                     if (curl_errno($ch)) {
                         $logger->error("Error en cURL al enviar correo: " . curl_error($ch));
                         throw new Exception("Error en cURL al enviar correo: " . curl_error($ch));
                     }
-
-                    $response = json_decode($response, true);
+                    
+                    $responseData = json_decode($response, true);
                     curl_close($ch);
-
-                    // Verificar la respuesta del envío
-                    if (isset($response['error'])) {
-                        $logger->error("Error al migrar correo: " . print_r($response, true));
-                        throw new Exception("Error al migrar correo: " . $response['error']['message']);
+                    
+                    if (isset($responseData['error'])) {
+                        $logger->error("Error al migrar correo: " . print_r($responseData, true));
+                        throw new Exception("Error al migrar correo: " . $responseData['error']['message']);
                     } else {
-                        $logger->info("Correo ID " . $email['id'] . " migrado exitosamente.");
+                        // Log de éxito
+                        $logger->info("Correo ID " . $email['id'] . " migrado exitosamente a la cuenta de destino.");
                     }
                 }
             } else {
