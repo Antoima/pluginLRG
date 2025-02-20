@@ -113,7 +113,7 @@ function sendEmailsToDestination($emails, $sourceToken, $destinationToken) {
 
         $logger->info("Enviando correo ID: $emailId");
 
-        // Obtener el contenido del correo
+        // Obtener el contenido del correo desde la cuenta de origen
         $emailData = makeApiRequest("https://www.googleapis.com/gmail/v1/users/me/messages/$emailId?format=raw", $sourceToken);
         
         if (isset($emailData['raw'])) {
@@ -125,10 +125,10 @@ function sendEmailsToDestination($emails, $sourceToken, $destinationToken) {
             // Crear el objeto para enviar el correo
             $emailDataToSend = ["raw" => base64_encode($rawEmail)];
 
-            // Enviar el correo a la cuenta de destino
+            // Enviar el correo a la cuenta de destino (pero desde el correo 1, no el destino)
             $ch = curl_init("https://www.googleapis.com/gmail/v1/users/me/messages/send");
             curl_setopt($ch, CURLOPT_HTTPHEADER, [
-                "Authorization: Bearer $destinationToken",
+                "Authorization: Bearer $sourceToken", // Usar el token de la cuenta de origen
                 "Content-Type: application/json"
             ]);
             curl_setopt($ch, CURLOPT_POST, true);
