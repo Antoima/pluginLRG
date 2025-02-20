@@ -129,9 +129,20 @@ function sendEmailsToDestination($emails, $sourceToken, $destinationToken) {
 
             $response = curl_exec($ch);
 
-            // Log para verificar la respuesta completa
-            $responseData = json_decode($response, true);
-            $logger->debug("Respuesta completa al enviar correo: " . print_r($responseData, true)); // Log completo
+            $logger->debug("Enviando correo ID $emailId a la cuenta de destino: $destinationEmail");
+            
+$logger->debug("URL de la solicitud: https://www.googleapis.com/gmail/v1/users/me/messages/send");
+
+$response = curl_exec($ch);
+
+// Log para ver la respuesta completa de la API
+if ($response === false) {
+    $logger->error("Error en cURL al enviar correo: " . curl_error($ch));
+} else {
+    $responseData = json_decode($response, true);
+    $logger->debug("Respuesta al enviar correo: " . print_r($responseData, true));
+}
+
 
             if (curl_errno($ch)) {
                 $logger->error("Error en cURL al enviar correo: " . curl_error($ch));
