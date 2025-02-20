@@ -89,7 +89,7 @@ $(document).ready(function () {
       $("#sourceEmail").val(response.email);
     })
     .catch((error) => {
-      console.error("Error crítico:", error); // ✅ Depuración
+      console.error("Error crítico:", error); // ✅ Depur
       Swal.fire(
         "Error",
         "No se pudo obtener la información del usuario.",
