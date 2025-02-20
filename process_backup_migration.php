@@ -118,36 +118,34 @@ function sendEmailsToDestination($emails, $sourceToken, $destinationToken) {
 
             // Crear el objeto para enviar el correo
             $emailDataToSend = ["raw" => base64_encode($rawEmail)];
+// Enviar el correo a la cuenta de destino
+$ch = curl_init("https://www.googleapis.com/gmail/v1/users/me/messages/send");
+curl_setopt($ch, CURLOPT_HTTPHEADER, [
+    "Authorization: Bearer $destinationToken",
+    "Content-Type: application/json"
+]);
+curl_setopt($ch, CURLOPT_POST, true);
+curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($emailDataToSend));
+curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 
-            // Enviar el correo a la cuenta de destino
-            $ch = curl_init("https://www.googleapis.com/gmail/v1/users/me/messages/send");
-            curl_setopt($ch, CURLOPT_HTTPHEADER, [
-                "Authorization: Bearer $destinationToken",
-                "Content-Type: application/json"
-            ]);
-            curl_setopt($ch, CURLOPT_POST, true);
-            curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($emailDataToSend));
-            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+$response = curl_exec($ch);
 
-            $response = curl_exec($ch);
+// Log para verificar la respuesta completa
+$responseData = json_decode($response, true);
+$logger->debug("Respuesta completa al enviar correo: " . print_r($responseData, true)); // Log completo
 
-            // Log para verificar la respuesta de la API
-            $logger->debug("Respuesta al enviar correo: " . $response);
+if (curl_errno($ch)) {
+    $logger->error("Error en cURL al enviar correo: " . curl_error($ch));
+    throw new Exception("Error en cURL al enviar correo: " . curl_error($ch));
+}
 
-            if (curl_errno($ch)) {
-                $logger->error("Error en cURL al enviar correo: " . curl_error($ch));
-                throw new Exception("Error en cURL al enviar correo: " . curl_error($ch));
-            }
+if (isset($responseData['error'])) {
+    $logger->error("Error al migrar correo: " . print_r($responseData, true));
+    throw new Exception("Error al migrar correo: " . print_r($responseData, true));
+}
 
-            $responseData = json_decode($response, true);
-            curl_close($ch);
+$logger->info("Correo enviado ID $emailId: " . $response);
 
-            if (isset($responseData['error'])) {
-                $logger->error("Error al migrar correo: " . print_r($responseData, true));
-                throw new Exception("Error al migrar correo: " . print_r($responseData, true));
-            }
-
-            $logger->info("Correo enviado ID $emailId: " . $response);
         } else {
             $logger->warning("No se encontró 'raw' para el correo ID: $emailId");
         }
@@ -157,6 +155,18 @@ function sendEmailsToDestination($emails, $sourceToken, $destinationToken) {
 // Función para manejar el flujo principal de la migración
 function handleMigration($sourceToken, $destinationToken, $sourceEmail, $destinationEmail) {
     global $logger;
+
+    // Verificar el token de destino
+if ($destinationEmail && $destinationToken) {
+    try {
+        checkDestinationToken($destinationToken); // Verificar que el token de destino sea válido
+        $logger->info("Token de destino verificado con éxito.");
+    } catch (Exception $e) {
+        $logger->error("Error al verificar token de destino: " . $e->getMessage());
+        echo json_encode(["status" => "error", "message" => "Error al verificar el token de destino."]);
+        exit();
+    }
+}
 
     // Obtener los correos de la cuenta de origen
     $emails = getEmails($sourceToken);
@@ -168,11 +178,8 @@ function handleMigration($sourceToken, $destinationToken, $sourceEmail, $destina
     file_put_contents("backup.mbox", $mboxContent);
     $logger->info("Respaldo generado con éxito.");
 
-    // Si existe una cuenta de destino, enviar los correos
-    if ($destinationEmail && $destinationToken) {
-        sendEmailsToDestination($emails, $sourceToken, $destinationToken);
-        $logger->info("Correos enviados a la cuenta de destino.");
-    }
+
+
 
     $_SESSION['progress'] = 100;
     session_write_close();
