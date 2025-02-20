@@ -73,25 +73,5 @@ $googleClientId = $config['google_client_id'];
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.4.20/dist/sweetalert2.all.min.js"></script>
     <script src="src/js/dashboard.js"></script>
-
-    <script>
-        // Mostrar el spinner cuando el formulario sea enviado
-        $('#backupMigrationForm').submit(function(event) {
-            event.preventDefault();  // Evitar el envío del formulario
-
-            // Mostrar el spinner
-            $('#spinner-container').show();
-
-            // Aquí va el código para hacer el procesamiento de respaldo/migración
-
-            // Simular un proceso largo (reemplaza esto con tu lógica real)
-            setTimeout(function() {
-                // Ocultar el spinner después de completar el proceso
-                $('#spinner-container').hide();
-                // Mostrar el botón de descarga de respaldo
-                $('#downloadBackup').show();
-            }, 5000);  // 5 segundos de espera (simulando proceso largo)
-        });
-    </script>
 </body>
 </html>

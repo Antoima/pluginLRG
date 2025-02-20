@@ -1,22 +1,4 @@
 $(document).ready(function () {
-  // Mostrar el spinner cuando el formulario sea enviado
-  $("#backupMigrationForm").submit(function (event) {
-    event.preventDefault(); // Evitar el envío del formulario
-
-    // Mostrar el spinner
-    $("#spinner-container").show();
-
-    // Aquí va el código para hacer el procesamiento de respaldo/migración
-
-    // Simular un proceso largo (reemplaza esto con tu lógica real)
-    setTimeout(function () {
-      // Ocultar el spinner después de completar el proceso
-      $("#spinner-container").hide();
-      // Mostrar el botón de descarga de respaldo
-      $("#downloadBackup").show();
-    }, 5000); // 5 segundos de espera (simulando proceso largo)
-  });
-
   // Escuchar mensajes desde auth-destination.php
   window.addEventListener("message", (event) => {
     if (event.data.action === "destinationAuthenticated") {
@@ -44,14 +26,14 @@ $(document).ready(function () {
   // Autenticar cuenta de destino
   $("#authDestinationBtn").click(() => {
     const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?
-            client_id=${GOOGLE_CLIENT_ID}&
-            redirect_uri=${encodeURIComponent(
-              "https://pl.luisguevara.net/auth-destination.php"
-            )}&
-            response_type=token&
-            scope=email%20openid%20https://www.googleapis.com/auth/gmail.readonly%20https://www.googleapis.com/auth/gmail.modify%20https://www.googleapis.com/auth/gmail.send&
-            state=destination&
-            prompt=select_account`.replace(/\s+/g, "");
+          client_id=${GOOGLE_CLIENT_ID}&
+          redirect_uri=${encodeURIComponent(
+            "https://pl.luisguevara.net/auth-destination.php"
+          )}&
+          response_type=token&
+          scope=email%20openid%20https://www.googleapis.com/auth/gmail.readonly%20https://www.googleapis.com/auth/gmail.modify%20https://www.googleapis.com/auth/gmail.send&
+          state=destination&
+          prompt=select_account`.replace(/\s+/g, "");
 
     window.open(authUrl, "authPopup", "width=600,height=600");
   });

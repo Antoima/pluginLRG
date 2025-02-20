@@ -44,7 +44,7 @@ $accessToken = $_POST['accessToken'] ?? null;
 if ($accessToken) {
     // Llamar a la función para verificar el token
     $result = verifyToken($accessToken);
-    echo $result;
+    echo $result;  // Enviar la respuesta al cliente
 } else {
     echo "No se ha proporcionado un token de acceso.";
 }
