@@ -1,11 +1,15 @@
 <?php
-session_start();
+// process_backup_migration.php
 
-// Verificar autenticación
-if (!isset($_SESSION['access_token'])) {
-    echo json_encode(["status" => "error", "message" => "No autenticado."]);
+// ✅ Validar token desde POST (no sesión)
+$sourceToken = $_POST['accessToken'] ?? null;
+
+if (empty($sourceToken)) {
+    echo json_encode(["status" => "error", "message" => "Token no proporcionado."]);
     exit();
 }
+
+// Resto del código...
 
 // Obtener tokens desde POST
 $sourceToken = $_POST['accessToken'] ?? null;
