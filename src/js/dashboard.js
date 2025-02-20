@@ -46,8 +46,8 @@ $(document).ready(function () {
             "Content-Type": "application/x-www-form-urlencoded",
           },
           body: new URLSearchParams({
-            client_id: "<?php echo $googleClientId; ?>",
-            client_secret: "<?php echo $config['google_client_secret']; ?>",
+            client_id: GOOGLE_CLIENT_ID, // <-- Usar variable global
+            client_secret: GOOGLE_CLIENT_SECRET, // <-- Usar variable global
             refresh_token: refreshToken,
             grant_type: "refresh_token",
           }),
@@ -88,12 +88,14 @@ $(document).ready(function () {
     const redirectUri = encodeURIComponent(
       "https://pl.luisguevara.net/auth-destination.php"
     ); // Codificar la URL
-    const scope = "https://www.googleapis.com/auth/gmail.send";
+    // const scope = "https://www.googleapis.com/auth/gmail.send";
+    // En dashboard.js, modifica el scope para incluir permisos de lectura:
+    const scope =
+      "https://www.googleapis.com/auth/gmail.readonly+https://www.googleapis.com/auth/gmail.send";
 
     // Construir la URL sin saltos de línea ni espacios
-    const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=token&scope=${scope}&state=destination&prompt=select_account`;
-
-    window.location.href = authUrl;
+    const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${GOOGLE_CLIENT_ID}&redirect_uri=${REDIRECT_URI}&response_type=token&scope=https://www.googleapis.com/auth/gmail.send&state=destination&prompt=select_account`;
+    window.open(authUrl, "authPopup", "width=600,height=600"); // Abrir en popup
   });
 
   // Verificar si ya hay token de destino
