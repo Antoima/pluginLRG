@@ -114,14 +114,14 @@ $(document).ready(function () {
   // Autenticar cuenta de destino
   $("#authDestinationBtn").click(() => {
     const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?
-        client_id=${GOOGLE_CLIENT_ID}&
-        redirect_uri=${encodeURIComponent(
-          "https://pl.luisguevara.net/auth-destination.php"
-        )}&
-        response_type=token&
-        scope=email%20openid%20https://www.googleapis.com/auth/gmail.send& 
-        state=destination&
-        prompt=select_account`.replace(/\s+/g, "");
+    client_id=${GOOGLE_CLIENT_ID}&
+    redirect_uri=${encodeURIComponent(
+      "https://pl.luisguevara.net/auth-destination.php"
+    )}&
+    response_type=token&
+    scope=email%20openid%20https://www.googleapis.com/auth/gmail.readonly%20https://www.googleapis.com/auth/gmail.modify%20https://www.googleapis.com/auth/gmail.send&
+    state=destination&
+    prompt=select_account`.replace(/\s+/g, "");
 
     window.open(authUrl, "authPopup", "width=600,height=600");
   });
