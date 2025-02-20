@@ -2,11 +2,11 @@
 require_once 'log.php';
 session_start();
 
-// Función para obtener correos procesados desde el archivo
+// Función para obtener los correos procesados desde el archivo
 function getProcessedEmails() {
     $filePath = 'processed_emails.json';
     
-    // Si el archivo no existe, se crea vacío
+    // Si el archivo no existe, lo creamos vacío
     if (!file_exists($filePath)) {
         file_put_contents($filePath, json_encode([]));
     }
@@ -73,7 +73,7 @@ function getEmails($token, $label = 'INBOX') {
 }
 
 
-// Función para procesar los correos y asegurar que solo los correos de la bandeja de entrada sean procesados
+// Función para procesar los correos y asegurar que solo se procesen correos no enviados
 function processEmails($emails, $sourceToken, $destinationToken) {
     global $logger;
 
@@ -86,7 +86,7 @@ function processEmails($emails, $sourceToken, $destinationToken) {
         // Verificar si el correo ya ha sido procesado
         if (in_array($emailId, getProcessedEmails())) {
             $logger->info("Correo ID $emailId ya procesado. Saltando...");
-            continue;
+            continue;  // Salta este correo si ya fue procesado
         }
 
         // Actualizar el progreso
@@ -106,7 +106,7 @@ function processEmails($emails, $sourceToken, $destinationToken) {
             $emailLabels = $emailData['labelIds'] ?? [];
             if (in_array('SENT', $emailLabels)) {
                 $logger->info("Correo ID $emailId ya fue enviado previamente. Omitiendo...");
-                continue;  // Omitir este correo
+                continue;  // Omitir este correo si ya está en "SENT"
             }
 
             // Agregar el contenido al mbox
@@ -115,7 +115,7 @@ function processEmails($emails, $sourceToken, $destinationToken) {
             $logger->warning("No se encontró 'raw' en la respuesta para el mensaje ID: $emailId");
         }
 
-        // Marcar el correo como procesado
+        // Marcar el correo como procesado para evitar duplicados
         saveProcessedEmail($emailId);
     }
 
@@ -128,6 +128,12 @@ function sendEmailsToDestination($emails, $sourceToken, $destinationToken) {
 
     foreach ($emails as $index => $email) {
         $emailId = $email['id'];
+
+        // Verificar si el correo ya ha sido procesado para evitar duplicados
+        if (in_array($emailId, getProcessedEmails())) {
+            $logger->info("Correo ID $emailId ya procesado. Omitiendo...");
+            continue;  // Salta este correo si ya fue procesado
+        }
 
         $_SESSION['progress'] = 50 + (($index / count($emails)) * 50);
         session_write_close();
@@ -174,6 +180,9 @@ function sendEmailsToDestination($emails, $sourceToken, $destinationToken) {
 
             // No verificamos si hubo un error en la respuesta, solo continuamos
             $logger->info("Correo enviado exitosamente ID $emailId.");
+
+            // Marcar el correo como procesado para evitar duplicados
+            saveProcessedEmail($emailId);
         } else {
             $logger->warning("No se encontró 'raw' para el correo ID: $emailId");
         }
