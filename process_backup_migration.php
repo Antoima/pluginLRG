@@ -14,7 +14,6 @@ if (empty($sourceToken)) {
 }
 
 // Obtener tokens desde POST
-$sourceToken = $_POST['accessToken'] ?? null;
 $destinationToken = $_POST['destinationAccessToken'] ?? null;
 $sourceEmail = $_POST['sourceEmail'];
 $destinationEmail = $_POST['destinationEmail'];
@@ -133,36 +132,35 @@ try {
                     $mboxContent .= "From - " . date('r') . "\n" . $rawEmail . "\n\n";
                 }
             
-// Datos del correo a enviar
-$emailDataToSend = [
-    "raw" => base64_encode($rawEmail), // El correo en formato base64
-    "payload" => [
-        "headers" => [
-            ["name" => "To", "value" => $destinationEmail]  // Dirección de destino
-        ]
-    ]
-];
-
-// Enviar correo
-$ch = curl_init("https://www.googleapis.com/gmail/v1/users/me/messages/send");
-curl_setopt($ch, CURLOPT_HTTPHEADER, [
-    "Authorization: Bearer $destinationToken", // Token de destino
-    "Content-Type: application/json"
-]);
-curl_setopt($ch, CURLOPT_POST, true);
-curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($emailDataToSend));
-curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-$response = json_decode(curl_exec($ch), true);
-curl_close($ch);
-
-// Verificar la respuesta del envío
-if (isset($response['error'])) {
-    $logger->error("Error al migrar correo: " . $response['error']['message']);
-    throw new Exception("Error al migrar correo: " . $response['error']['message']);
-} else {
-    $logger->info("Correo migrado exitosamente a: " . $destinationEmail);
-}
-
+                // Crear los datos del correo a enviar
+                $emailDataToSend = [
+                    "raw" => base64_encode($rawEmail), // Base64 encode del correo original
+                    "payload" => [
+                        "headers" => [
+                            ["name" => "To", "value" => $destinationEmail]  // Dirección de destino
+                        ]
+                    ]
+                ];
+            
+                // Enviar el correo con el token de destino
+                $ch = curl_init("https://www.googleapis.com/gmail/v1/users/me/messages/send");
+                curl_setopt($ch, CURLOPT_HTTPHEADER, [
+                    "Authorization: Bearer $destinationToken", // Token de destino
+                    "Content-Type: application/json"
+                ]);
+                curl_setopt($ch, CURLOPT_POST, true);
+                curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($emailDataToSend));  // Enviar los datos con el 'To'
+                curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+                $response = json_decode(curl_exec($ch), true);
+                curl_close($ch);
+            
+                // Verificar la respuesta del envío
+                if (isset($response['error'])) {
+                    $logger->error("Error al migrar correo: " . $response['error']['message']);
+                    throw new Exception("Error al migrar correo: " . $response['error']['message']);
+                } else {
+                    $logger->info("Correo migrado exitosamente a: " . $destinationEmail);
+                }
             } else {
                 $logger->warning("No se encontró 'raw' para migrar el correo con ID: " . $email['id']);
             }
