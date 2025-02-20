@@ -29,7 +29,6 @@ function getEmails($token) {
     return $emails['messages'] ?? [];
 }
 
-
 // Función para recuperar el contenido de un correo
 function getEmailContent($emailId, $token) {
     $url = "https://www.googleapis.com/gmail/v1/users/me/messages/$emailId?format=raw";
@@ -57,90 +56,49 @@ function getEmailContent($emailId, $token) {
     return $emailData['raw'] ?? null;
 }
 
+// Función para crear un archivo de respaldo .mbox
+function createBackupFile($emails, $token) {
+    $backupFileName = 'backup.mbox';
+    $file = fopen($backupFileName, 'w');
 
-// Función para enviar un correo a la cuenta de destino
-function sendEmail($rawEmail, $destinationToken) {
-    $url = "https://www.googleapis.com/gmail/v1/users/me/messages/send";
-    $headers = [
-        "Authorization: Bearer $destinationToken",
-        "Content-Type: application/json",
-    ];
-
-    $emailData = [
-        'raw' => base64_encode($rawEmail),
-    ];
-
-    // Log para depuración antes de enviar el correo
-    echo "Correo a enviar (base64): " . $emailData['raw'] . "\n";  
-
-    $ch = curl_init();
-    curl_setopt($ch, CURLOPT_URL, $url);
-    curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
-    curl_setopt($ch, CURLOPT_POST, true);
-    curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($emailData));
-    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-    
-    $response = curl_exec($ch);
-    if ($response === false) {
-        die('Error en cURL al enviar el correo: ' . curl_error($ch));  // Log si hay error en cURL
-    }
-
-    $responseData = json_decode($response, true);
-    if (isset($responseData['error'])) {
-        die('Error en la API de Gmail al enviar el correo: ' . $responseData['error']['message']);  // Log si la API de Gmail devuelve un error
-    }
-
-    curl_close($ch);
-
-    // Si tiene ID de mensaje, el correo fue enviado
-    return isset($responseData['id']);
-}
-
-
-// Función principal para realizar la migración de correos
-function migrateEmails($sourceToken, $destinationToken) {
-    // Obtener los correos desde la cuenta fuente
-    echo "Obteniendo correos desde la cuenta fuente...\n";
-    $emails = getEmails($sourceToken);
-
-    echo "Número de correos obtenidos: " . count($emails) . "\n";
-    
-    // Procesar cada correo
     foreach ($emails as $email) {
         $emailId = $email['id'];
 
         // Obtener el contenido del correo
-        echo "Obteniendo contenido del correo ID: $emailId...\n";
-        $rawEmail = getEmailContent($emailId, $sourceToken);
+        $rawEmail = getEmailContent($emailId, $token);
         
         if ($rawEmail) {
-            echo "Enviando correo ID: $emailId...\n";
-            // Enviar el correo al destino
-            $sent = sendEmail(base64_decode(strtr($rawEmail, '-_', '+/')), $destinationToken);
-            
-            if ($sent) {
-                echo "Correo ID $emailId enviado exitosamente.\n";
-            } else {
-                echo "Error al enviar el correo ID $emailId.\n";
-            }
-        } else {
-            echo "Error al obtener el contenido del correo ID $emailId.\n";
+            // Escribir el correo en el archivo
+            fwrite($file, base64_decode(strtr($rawEmail, '-_', '+/')));
         }
     }
 
-    echo "Proceso de migración completado.\n";
+    fclose($file);
+    return $backupFileName;
 }
 
+// Función principal para recuperar correos y generar el archivo de respaldo
+function backupEmails($token) {
+    // Obtener los correos desde la cuenta fuente
+    $emails = getEmails($token);
+    echo "Número de correos obtenidos: " . count($emails) . "\n";
+    
+    // Crear el archivo de respaldo .mbox
+    $backupFileName = createBackupFile($emails, $token);
+    
+    return $backupFileName;
+}
 
-// Aquí se ejecuta la migración
+// Aquí se ejecuta la recuperación de correos
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $sourceToken = $_POST['sourceAccessToken'] ?? null;
-    $destinationToken = $_POST['destinationAccessToken'] ?? null;
 
-    if ($sourceToken && $destinationToken) {
-        migrateEmails($sourceToken, $destinationToken);
+    if ($sourceToken) {
+        $backupFileName = backupEmails($sourceToken);
+        // Pasar el archivo generado para su descarga
+        echo "Respaldo creado: <a href='$backupFileName' download>Descargar Respaldo</a>";
     } else {
-        echo "Faltan tokens de acceso para la migración.";
+        echo "Falta el token de acceso para la cuenta de origen.";
     }
 }
 ?>
