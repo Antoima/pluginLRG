@@ -29,6 +29,11 @@ function saveProcessedEmail($emailId) {
     }
 }
 
+// Función para truncar las respuestas largas
+function truncateResponse($response) {
+    return substr(print_r($response, true), 0, 500); // Trunca a 500 caracteres
+}
+
 // Función para hacer la solicitud cURL y obtener datos de Gmail
 function makeApiRequest($url, $token) {
     $ch = curl_init($url);
@@ -47,16 +52,17 @@ function makeApiRequest($url, $token) {
     
     $responseData = json_decode($response, true);
     
-    // Depuración adicional: Logueamos la respuesta de la API
+    // Depuración adicional: Logueamos la respuesta de la API truncada
     global $logger;
     if ($responseData === null) {
-        $logger->error("Respuesta de la API no válida: " . $response);
+        $logger->error("Respuesta de la API no válida: " . truncateResponse($response));
     } else {
-        $logger->debug("Respuesta de la API: " . print_r($responseData, true));
+        $logger->debug("Respuesta de la API (truncada): " . truncateResponse($responseData));
     }
     
     return $responseData;
 }
+
 
 // Función para obtener los correos de Gmail
 function getEmails($token) {
