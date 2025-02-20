@@ -164,13 +164,12 @@ $(document).ready(function () {
       success: (response) => {
         clearInterval(checkProgress);
         progressBar.css("width", "100%").text("100%");
-        const result = JSON.parse(response);
         Swal.fire(
-          result.status === "success" ? "Éxito" : "Error",
-          result.message,
-          result.status
+          response.status === "success" ? "Éxito" : "Error",
+          response.message,
+          response.status
         );
-        if (result.status === "success") $("#downloadBackup").show();
+        if (response.status === "success") $("#downloadBackup").show();
       },
       error: () => {
         clearInterval(checkProgress);
