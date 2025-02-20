@@ -23,10 +23,11 @@ $googleClientId = $config['google_client_id'];
     <title>Email Backup & Migration Tool</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11.4.20/dist/sweetalert2.min.css">
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
-    <meta name="google-signin-client_id" content="<?php echo $googleClientId; ?>">
     <script>
-      // Pasar la variable PHP a JavaScript
-      const googleClientId = "<?php echo $googleClientId; ?>";
+        // Variables globales para JavaScript
+        const GOOGLE_CLIENT_ID = "<?php echo $googleClientId; ?>";
+        const GOOGLE_CLIENT_SECRET = "<?php echo $config['google_client_secret']; ?>";
+        const REDIRECT_URI = "<?php echo urlencode('https://pl.luisguevara.net/auth-destination.php'); ?>";
     </script>
     <style>
         .container { margin-top: 50px; }
