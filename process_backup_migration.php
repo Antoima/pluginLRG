@@ -19,8 +19,9 @@ function verifyToken($token) {
 
     // Comprobación de errores de cURL
     if ($response === false) {
-        echo 'Error en cURL: ' . curl_error($ch);
-        exit;
+        $errorMessage = 'Error en cURL: ' . curl_error($ch);
+        curl_close($ch);
+        return $errorMessage;
     }
 
     // Decodificar la respuesta JSON
@@ -28,12 +29,13 @@ function verifyToken($token) {
 
     // Verificar si hay un error en la respuesta de la API de Gmail
     if (isset($data['error'])) {
-        echo 'Error en la API de Gmail: ' . $data['error']['message'];
+        $errorMessage = 'Error en la API de Gmail: ' . $data['error']['message'] . ' (Código: ' . $data['error']['code'] . ')';
+        curl_close($ch);
+        return $errorMessage;
     } else {
-        echo 'Token válido, respuesta recibida de Gmail.';
+        curl_close($ch);
+        return 'Token válido, respuesta recibida de Gmail.';
     }
-
-    curl_close($ch);
 }
 
 // Verificar el token de acceso (por ejemplo, token de la sesión o un valor específico)
@@ -41,7 +43,8 @@ $accessToken = $_POST['accessToken'] ?? null;
 
 if ($accessToken) {
     // Llamar a la función para verificar el token
-    verifyToken($accessToken);
+    $result = verifyToken($accessToken);
+    echo $result;
 } else {
     echo "No se ha proporcionado un token de acceso.";
 }
