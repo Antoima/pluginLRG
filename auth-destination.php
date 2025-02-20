@@ -1,5 +1,8 @@
 <?php
 session_start();
+// En tu lógica de autenticación
+localStorage.setItem('refresh_token', NUEVO_REFRESH_TOKEN);
+
 ?>
 <!DOCTYPE html>
 <html>
