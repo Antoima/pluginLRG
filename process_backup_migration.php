@@ -65,14 +65,13 @@ function makeApiRequest($url, $token) {
     return $responseData;
 }
 
-
 // Función para obtener los correos de Gmail filtrando por etiquetas (por defecto, solo bandeja de entrada)
-
 function getEmails($token, $label = 'INBOX') {
     // URL para obtener los correos de una etiqueta específica
     $url = "https://www.googleapis.com/gmail/v1/users/me/messages?labelIds=$label";
     return makeApiRequest($url, $token)['messages'] ?? [];
 }
+
 
 
 // Función para procesar los correos y asegurar que solo se procesen correos no enviados
@@ -230,24 +229,25 @@ function handleMigration($sourceToken, $destinationToken, $sourceEmail, $destina
         exit();
     }
 
-    // Obtener los correos de la cuenta de origen
-    $emails = getEmails($sourceToken);  // Obtener correos solo de la bandeja de entrada
+    // Obtener los correos de la cuenta de destino
+    $emails = getEmails($destinationToken);  // Obtener correos de la cuenta de destino
     $totalEmails = count($emails);
-    $logger->info("Total de correos obtenidos de la cuenta de origen: $totalEmails");
+    $logger->info("Total de correos obtenidos de la cuenta de destino: $totalEmails");
 
     // Procesar los correos y generar el archivo de respaldo
-    $mboxContent = processEmails($emails, $sourceToken, $destinationToken);
+    $mboxContent = processEmails($emails, $destinationToken, $sourceToken);  // Cambié el orden de los tokens aquí
     file_put_contents("backup.mbox", $mboxContent);
     $logger->info("Respaldo generado con éxito.");
 
-    // Enviar los correos procesados al destino
-    sendEmailsToDestination($emails, $sourceToken, $destinationToken);
+    // Enviar los correos procesados del destino a la cuenta de origen
+    sendEmailsToDestination($emails, $destinationToken, $sourceToken);  // Cambié el orden de los tokens aquí también
 
     $_SESSION['progress'] = 100;
     session_write_close();
     $logger->info("Proceso de migración completado exitosamente.");
     echo json_encode(["status" => "success", "message" => "Proceso completado."]);
 }
+
 
 // Función para verificar el token de destino
 function checkDestinationToken($destinationToken) {
