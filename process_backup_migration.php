@@ -176,9 +176,15 @@ try {
                     } else {
                         // Log de éxito
                         $logger->info("Correo ID " . $email['id'] . " migrado exitosamente a la cuenta de destino.");
-                        
-                        // Marcar el correo como procesado solo después de que haya sido migrado con éxito
-                        $_SESSION['processedEmails'][] = $email['id']; // Guardamos el ID del correo procesado
+
+// Asegurarse de que el correo se haya migrado correctamente antes de marcarlo como procesado
+if ($responseData['error'] ?? null) {
+    $logger->error("Error al migrar correo ID " . $email['id'] . ": " . print_r($responseData['error'], true));
+} else {
+    $logger->info("Correo ID " . $email['id'] . " migrado exitosamente.");
+    $_SESSION['processedEmails'][] = $email['id']; // Marcar como procesado solo si la migración es exitosa
+}
+
                     }
                     
                 }
@@ -186,8 +192,6 @@ try {
                 $logger->warning("No se encontró 'raw' para migrar el correo con ID: " . $email['id']);
             }
 
-            // Marcar el correo como procesado
-          //  $_SESSION['processedEmails'][] = $email['id'];
         }
     }
 
