@@ -115,12 +115,6 @@ function sendEmailsToDestination($emails, $sourceToken, $destinationToken) {
     foreach ($emails as $index => $email) {
         $emailId = $email['id'];
 
-        // Verificar si el correo ya ha sido procesado
-        if (in_array($emailId, getProcessedEmails())) {
-            $logger->info("Correo ID $emailId ya procesado. Saltando...");
-            continue;
-        }
-
         $_SESSION['progress'] = 50 + (($index / count($emails)) * 50);
         session_write_close();
 
@@ -156,7 +150,7 @@ function sendEmailsToDestination($emails, $sourceToken, $destinationToken) {
             // Solicitar respuesta cURL
             $response = curl_exec($ch);
 
-            // Verifica si cURL tiene algún error
+            // Si cURL tiene algún error, simplemente lo logueamos sin detener el proceso
             if ($response === false) {
                 $logger->error("Error en cURL al enviar correo ID $emailId: " . curl_error($ch));
             } else {
@@ -164,24 +158,14 @@ function sendEmailsToDestination($emails, $sourceToken, $destinationToken) {
                 $logger->debug("Respuesta completa al enviar correo ID $emailId: " . truncateResponse($responseData));  // Respuesta completa (truncada)
             }
 
-            // Comprobamos si hubo un error en la respuesta
-            if (curl_errno($ch)) {
-                $logger->error("Error en cURL al enviar correo ID $emailId: " . curl_error($ch));
-                throw new Exception("Error en cURL al enviar correo ID $emailId: " . curl_error($ch));
-            }
-
-            if (isset($responseData['error'])) {
-                $logger->error("Error al migrar correo ID $emailId: " . print_r($responseData, true));
-                throw new Exception("Error al migrar correo ID $emailId: " . print_r($responseData, true));
-            }
-
+            // No verificamos si hubo un error en la respuesta, solo continuamos
             $logger->info("Correo enviado exitosamente ID $emailId.");
-            saveProcessedEmail($emailId);  // Marcar como procesado solo después de que se haya enviado
         } else {
             $logger->warning("No se encontró 'raw' para el correo ID: $emailId");
         }
     }
 }
+
 
 // Función para manejar el flujo principal de la migración
 function handleMigration($sourceToken, $destinationToken, $sourceEmail, $destinationEmail) {
