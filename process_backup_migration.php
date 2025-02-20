@@ -90,6 +90,7 @@ try {
 // Ejemplo de cambio en el flujo
 $_SESSION['progress'] = 25 + (($index / $totalEmails) * 25); // Actualiza el progreso
 // No cierres la sesión hasta el final
+session_write_close();
 
 
             $messageId = $email['id'];
