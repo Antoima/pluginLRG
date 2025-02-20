@@ -111,41 +111,39 @@ function sendEmailsToDestination($emails, $sourceToken, $destinationToken) {
         $emailData = makeApiRequest("https://www.googleapis.com/gmail/v1/users/me/messages/$emailId?format=raw", $sourceToken);
         
         if (isset($emailData['raw'])) {
+            // El 'raw' contiene los datos codificados en base64, lo que está bien
             $rawEmail = base64_decode(strtr($emailData['raw'], '-_', '+/'));
-
-            // Log para verificar el contenido del correo
-            $logger->debug("Contenido del correo (raw): " . print_r($rawEmail, true));
 
             // Crear el objeto para enviar el correo
             $emailDataToSend = ["raw" => base64_encode($rawEmail)];
-// Enviar el correo a la cuenta de destino
-$ch = curl_init("https://www.googleapis.com/gmail/v1/users/me/messages/send");
-curl_setopt($ch, CURLOPT_HTTPHEADER, [
-    "Authorization: Bearer $destinationToken",
-    "Content-Type: application/json"
-]);
-curl_setopt($ch, CURLOPT_POST, true);
-curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($emailDataToSend));
-curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 
-$response = curl_exec($ch);
+            // Enviar el correo a la cuenta de destino
+            $ch = curl_init("https://www.googleapis.com/gmail/v1/users/me/messages/send");
+            curl_setopt($ch, CURLOPT_HTTPHEADER, [
+                "Authorization: Bearer $destinationToken",
+                "Content-Type: application/json"
+            ]);
+            curl_setopt($ch, CURLOPT_POST, true);
+            curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($emailDataToSend));
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 
-// Log para verificar la respuesta completa
-$responseData = json_decode($response, true);
-$logger->debug("Respuesta completa al enviar correo: " . print_r($responseData, true)); // Log completo
+            $response = curl_exec($ch);
 
-if (curl_errno($ch)) {
-    $logger->error("Error en cURL al enviar correo: " . curl_error($ch));
-    throw new Exception("Error en cURL al enviar correo: " . curl_error($ch));
-}
+            // Log para verificar la respuesta completa
+            $responseData = json_decode($response, true);
+            $logger->debug("Respuesta completa al enviar correo: " . print_r($responseData, true)); // Log completo
 
-if (isset($responseData['error'])) {
-    $logger->error("Error al migrar correo: " . print_r($responseData, true));
-    throw new Exception("Error al migrar correo: " . print_r($responseData, true));
-}
+            if (curl_errno($ch)) {
+                $logger->error("Error en cURL al enviar correo: " . curl_error($ch));
+                throw new Exception("Error en cURL al enviar correo: " . curl_error($ch));
+            }
 
-$logger->info("Correo enviado ID $emailId: " . $response);
+            if (isset($responseData['error'])) {
+                $logger->error("Error al migrar correo: " . print_r($responseData, true));
+                throw new Exception("Error al migrar correo: " . print_r($responseData, true));
+            }
 
+            $logger->info("Correo enviado ID $emailId: " . $response);
         } else {
             $logger->warning("No se encontró 'raw' para el correo ID: $emailId");
         }
