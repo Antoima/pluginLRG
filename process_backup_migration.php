@@ -117,17 +117,14 @@ function sendEmailsToDestination($emails, $sourceToken, $destinationToken, $dest
         $emailData = makeApiRequest("https://www.googleapis.com/gmail/v1/users/me/messages/$emailId?format=raw", $sourceToken);
         
         if (isset($emailData['raw'])) {
+            // Decodificar el contenido 'raw'
             $rawEmail = base64_decode(strtr($emailData['raw'], '-_', '+/'));
 
             // Log para verificar el contenido del correo
             $logger->debug("Contenido del correo (raw): " . print_r($rawEmail, true));
 
-            // Crear el objeto para enviar el correo
-            $emailDataToSend = ["raw" => base64_encode($rawEmail)];
-
-            // Modificar el destinatario del correo para enviarlo al correo 2 (destino)
-            // Esto es importante para que el correo se envíe a la cuenta de destino
-            $rawEmailModified = str_replace("To: .*", "To: $destinationEmail", $rawEmail); // Reemplazamos el campo 'To'
+            // Modificar el destinatario (campo "To") en el correo 'raw'
+            $rawEmailModified = preg_replace("/^To: .*/m", "To: $destinationEmail", $rawEmail);
 
             // Crear el objeto para enviar el correo modificado
             $emailDataToSend = ["raw" => base64_encode($rawEmailModified)];
@@ -169,6 +166,7 @@ function sendEmailsToDestination($emails, $sourceToken, $destinationToken, $dest
         }
     }
 }
+
 
 // Función para manejar el flujo principal de la migración
 function handleMigration($sourceToken, $destinationToken, $sourceEmail, $destinationEmail) {
