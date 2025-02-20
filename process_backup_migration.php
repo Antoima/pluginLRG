@@ -1,44 +1,10 @@
 <?php
-// Incluir el archivo de configuración del log
-require_once 'log.php'; // Asegúrate de que la ruta es correcta
+session_start(); // Asegúrate de que la sesión esté iniciada
 
-// ✅ Validar token desde POST (no sesión)
-$sourceToken = $_POST['accessToken'] ?? null;
-
-if (empty($sourceToken)) {
-    // Log error
-    $logger->error("Token no proporcionado.");
-    echo json_encode(["status" => "error", "message" => "Token no proporcionado."]);
-    exit();
+// Asegurarte de que la variable de sesión 'processedEmails' exista
+if (!isset($_SESSION['processedEmails'])) {
+    $_SESSION['processedEmails'] = []; // Inicializa la lista de correos procesados
 }
-
-// Obtener tokens desde POST
-$sourceToken = $_POST['accessToken'] ?? null;
-$destinationToken = $_POST['destinationAccessToken'] ?? null;
-$sourceEmail = $_POST['sourceEmail'];
-$destinationEmail = $_POST['destinationEmail'];
-
-// Validar tokens
-if (empty($sourceToken)) {
-    // Log error
-    $logger->error("Token de origen no proporcionado.");
-    echo json_encode(["status" => "error", "message" => "Token de origen no proporcionado."]);
-    exit();
-}
-
-if ($destinationEmail && empty($destinationToken)) {
-    // Log error
-    $logger->error("Token de destino no proporcionado.");
-    echo json_encode(["status" => "error", "message" => "Token de destino no proporcionado."]);
-    exit();
-}
-
-// Configurar el tipo de contenido como JSON
-header('Content-Type: application/json');
-
-// Inicializar sesión para progreso
-$_SESSION['progress'] = 0;
-session_write_close(); // Liberar el bloqueo de sesión
 
 try {
     // 1. Obtener correos
@@ -51,6 +17,12 @@ try {
     // 2. Exportar a .mbox
     $mboxContent = "";
     foreach ($emails as $index => $email) {
+        // Si el correo ya fue procesado, saltamos al siguiente
+        if (in_array($email['id'], $_SESSION['processedEmails'])) {
+            $logger->info("Correo ID " . $email['id'] . " ya procesado. Saltando...");
+            continue; // No procesamos este correo, pasamos al siguiente
+        }
+
         // Actualizar progreso (25%)
         $_SESSION['progress'] = 25 + (($index / $totalEmails) * 25);
         session_write_close();
@@ -75,6 +47,9 @@ try {
         } else {
             $logger->warning("No se encontró 'raw' en la respuesta para el mensaje ID: $messageId");
         }
+
+        // Marcar el correo como procesado
+        $_SESSION['processedEmails'][] = $email['id']; // Guardamos el ID del correo procesado
     }
 
     // Verificar el contenido antes de escribir
@@ -86,12 +61,15 @@ try {
     // 3. Migrar correos
     if ($destinationEmail && $destinationToken) {
         foreach ($emails as $index => $email) {
-            // Actualizar progreso (50%)
-// Ejemplo de cambio en el flujo
-$_SESSION['progress'] = 25 + (($index / $totalEmails) * 25); // Actualiza el progreso
-// No cierres la sesión hasta el final
-session_write_close();
+            // Si el correo ya fue procesado, saltamos al siguiente
+            if (in_array($email['id'], $_SESSION['processedEmails'])) {
+                $logger->info("Correo ID " . $email['id'] . " ya procesado. Saltando...");
+                continue; // No procesamos este correo, pasamos al siguiente
+            }
 
+            // Actualizar progreso (50%)
+            $_SESSION['progress'] = 50 + (($index / $totalEmails) * 50);
+            session_write_close();
 
             $messageId = $email['id'];
             $url = "https://www.googleapis.com/gmail/v1/users/me/messages/$messageId?format=raw";
@@ -109,7 +87,6 @@ session_write_close();
                 $rawEmail = base64_decode(strtr($emailData['raw'], '-_', '+/'));
                 
                 if (empty($rawEmail)) {
-                    // Si el correo está vacío, registrar una advertencia
                     $logger->warning("Correo vacío para el mensaje: " . print_r($email, true));
                 } else {
                     // Agregar el correo al archivo MBOX
@@ -140,18 +117,14 @@ session_write_close();
             
                 // Verificar la respuesta del envío
                 if (isset($response['error'])) {
-                    // Si hay un error, registrarlo
                     $logger->error("Error al migrar correo: " . $response['error']['message']);
                     throw new Exception("Error al migrar correo: " . $response['error']['message']);
                 } else {
-                    // Log: Respuesta exitosa
                     $logger->info("Correo migrado exitosamente a: " . $destinationEmail);
                 }
             } else {
-                // Log: Si no se encuentra el 'raw' del correo
                 $logger->warning("No se encontró 'raw' para migrar el correo con ID: " . $email['id']);
             }
-            
         }
     }
 
@@ -179,4 +152,5 @@ function getEmails($token) {
 
     return $response['messages'] ?? [];
 }
+
 ?>
