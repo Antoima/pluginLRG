@@ -1,7 +1,8 @@
 <?php
 // backend/endpoint/auth/index.php
 
-require_once __DIR__ . '/../controlador/index.php';  // Ruta al controlador
+require_once __DIR__ . '/controlador/index.php';
+
 
 class GoogleAuthEndpoint
 {
