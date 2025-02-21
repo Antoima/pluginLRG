@@ -37,7 +37,7 @@
                         <i class="bi bi-envelope-fill" style="font-size: 4rem; color: #28a745;"></i>
                         <h5 class="card-title mt-3">Migración de Correos</h5>
                         <p class="card-text">Realiza la migración de tus correos electrónicos entre diferentes servicios.</p>
-                        <a href="wiew/migration.php" class="btn btn-success">Ir a la Migración</a>
+                        <a href="view/migration.php" class="btn btn-success">Ir a la Migración</a>
                     </div>
                 </div>
             </div>
