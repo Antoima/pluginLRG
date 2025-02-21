@@ -13,7 +13,7 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
     
     <!-- Enlace al CSS personalizado -->
-    <link rel="stylesheet" href="src/css/styles.css">
+    <link rel="stylesheet" href="../src/css/styles.css">
 </head>
 <body>
     <div class="container mt-5">
@@ -42,6 +42,6 @@
     <!-- Enlace a los scripts de Bootstrap y JS personalizado -->
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.min.js"></script>
-    <script src="src/js/script.js"></script>
+    <script src="../src/js/script.js"></script>
 </body>
 </html>
