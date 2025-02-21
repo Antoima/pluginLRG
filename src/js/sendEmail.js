@@ -1,44 +1,53 @@
 $(document).ready(function () {
-  // Obtener el token de acceso de la URL
   const params = new URLSearchParams(window.location.search);
-  const accessToken = params.get("access_token");
+  const accessToken = localStorage.getItem("access_token"); // Usar localStorage en lugar de la URL
 
-  // Manejar el envío del formulario
   $("#sendEmailForm").on("submit", function (event) {
     event.preventDefault();
 
-    // Obtener el token de reCAPTCHA v3
-    grecaptcha.ready(function () {
+    grecaptcha.ready(() => {
       grecaptcha
-        .execute("6Lckg9UqAAAAAEVFkZhz7IqoE8iQln4ehpVmBKTS", {
-          action: "submit",
-        })
-        .then(function (token) {
+        .execute(recaptchaSiteKey, { action: "submit" })
+        .then((token) => {
           const to = $("#to").val();
           const subject = $("#subject").val();
           const body = $("#body").val();
 
-          // Verificar reCAPTCHA en el servidor
-          $.post(
-            "verifyRecaptcha.php",
-            { recaptchaResponse: token },
-            function (data) {
-              const response = JSON.parse(data);
+          // Verificar reCAPTCHA
+          $.post("verifyRecaptcha.php", { recaptchaResponse: token })
+            .done((data) => {
+              console.log("Respuesta del servidor:", data); // Depuración
+
+              // Verificar si data es un objeto o una cadena JSON
+              let response;
+              if (typeof data === "string") {
+                try {
+                  response = JSON.parse(data);
+                } catch (e) {
+                  showError(`Respuesta inválida: ${data}`);
+                  return;
+                }
+              } else if (typeof data === "object") {
+                response = data; // data ya es un objeto
+              } else {
+                showError(`Respuesta inválida: ${data}`);
+                return;
+              }
+
+              // Manejar la respuesta
               if (response.success) {
                 sendEmail(accessToken, to, subject, body);
               } else {
-                $("#recaptchaError")
-                  .text("La verificación de reCAPTCHA falló.")
-                  .show();
-                console.error("Error de reCAPTCHA:", response.message);
+                showError(`Error de reCAPTCHA: ${response.message}`);
               }
-            }
-          );
+            })
+            .fail((xhr) => {
+              showError(`Error de conexión: ${xhr.statusText}`);
+            });
         });
     });
   });
 
-  // Función para enviar un correo electrónico
   function sendEmail(accessToken, to, subject, body) {
     const email = [
       `To: ${to}`,
@@ -49,7 +58,7 @@ $(document).ready(function () {
       body,
     ].join("\n");
 
-    const base64EncodedEmail = btoa(unescape(encodeURIComponent(email)))
+    const base64Email = btoa(unescape(encodeURIComponent(email)))
       .replace(/\+/g, "-")
       .replace(/\//g, "_")
       .replace(/=+$/, "");
@@ -58,29 +67,36 @@ $(document).ready(function () {
       url: "https://www.googleapis.com/gmail/v1/users/me/messages/send",
       type: "POST",
       contentType: "application/json",
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-      },
-      data: JSON.stringify({
-        raw: base64EncodedEmail,
-      }),
-      success: function (response) {
+      headers: { Authorization: `Bearer ${accessToken}` },
+      data: JSON.stringify({ raw: base64Email }),
+      success: () => {
+        // Mostrar mensaje de éxito y redirigir después de que el usuario cierre el mensaje
         Swal.fire({
-          title: "Correo enviado",
-          text: "El correo electrónico se ha enviado correctamente.",
           icon: "success",
-          confirmButtonText: "Aceptar",
+          title: "Éxito",
+          text: "Correo enviado correctamente.",
+        }).then((result) => {
+          if (result.isConfirmed) {
+            window.location.href = "email_backup_migration.php"; // Redirigir a la nueva interfaz
+          }
         });
       },
-      error: function (xhr, status, error) {
-        console.error("Error al enviar el correo:", xhr.responseText);
-        Swal.fire({
-          title: "Error",
-          text: "Hubo un problema al enviar el correo electrónico.",
-          icon: "error",
-          confirmButtonText: "Aceptar",
-        });
+      error: (xhr) => {
+        const errorMsg =
+          xhr.responseJSON?.error?.message || "Error desconocido.";
+        Swal.fire("Error", `Falló el envío: ${errorMsg}`, "error");
       },
     });
+  }
+
+  function showError(message) {
+    $("#recaptchaError").text(message).show();
+    console.error("Error:", message);
+  }
+
+  function resetUI() {
+    $("#sendEmailForm")[0].reset();
+    $("#contentSection").hide();
+    $("#cameraSection").show();
   }
 });

@@ -4,15 +4,17 @@ let faceDetectionInterval;
 // 1. Cargar modelos
 async function loadModels() {
   try {
-    $("#loadingOverlay").show(); // Mostrar spinner
+    $("#loadingOverlay").show();
 
     await Promise.all([
       faceapi.nets.tinyFaceDetector.loadFromUri("/models"),
       faceapi.nets.faceLandmark68Net.loadFromUri("/models"),
       faceapi.nets.faceRecognitionNet.loadFromUri("/models"),
+      faceapi.nets.ageGenderNet.loadFromUri("/models"),
+      faceapi.nets.faceExpressionNet.loadFromUri("/models"),
     ]);
 
-    $("#loadingOverlay").hide(); // Ocultar spinner
+    $("#loadingOverlay").hide();
     Swal.fire(
       "Modelos cargados",
       "La IA está lista para reconocer rostros",
@@ -27,26 +29,43 @@ async function loadModels() {
 
 // 2. Iniciar cámara y detección
 async function startFaceDetection() {
-  const video = document.createElement("video");
-  $("#cameraPreview").prepend(video);
-
   try {
-    videoStream = await navigator.mediaDevices.getUserMedia({ video: {} });
-    video.srcObject = videoStream;
-    await video.play();
+    const video = document.createElement("video");
+    video.setAttribute("playsinline", "");
+    $("#cameraPreview").empty().append(video);
 
-    // Ajustar tamaño de la cámara
+    videoStream = await navigator.mediaDevices.getUserMedia({
+      video: {
+        facingMode: "user",
+        width: { ideal: 640 },
+        height: { ideal: 480 },
+      },
+    });
+
+    video.srcObject = videoStream;
+
+    await new Promise((resolve) => {
+      video.onloadedmetadata = () => {
+        video.width = video.videoWidth;
+        video.height = video.videoHeight;
+        video.play();
+        resolve();
+      };
+    });
+
     video.width = $("#cameraPreview").width();
     video.height = $("#cameraPreview").height();
 
-    // Detección en tiempo real
     faceDetectionInterval = setInterval(async () => {
       const detections = await faceapi
         .detectAllFaces(video, new faceapi.TinyFaceDetectorOptions())
         .withFaceLandmarks()
+        .withFaceExpressions()
+        .withAgeAndGender()
         .withFaceDescriptors();
 
-      // Dibujar resultados
+      if (!detections || detections.length === 0) return;
+
       const canvas = faceapi.createCanvasFromMedia(video);
       $("#cameraPreview canvas").remove();
       $("#cameraPreview").append(canvas);
@@ -59,7 +78,8 @@ async function startFaceDetection() {
       faceapi.draw.drawFaceLandmarks(canvas, resizedDetections);
     }, 100);
   } catch (error) {
-    Swal.fire("Error", `Error de cámara: ${error.message}`, "error");
+    console.error("Error en cámara:", error);
+    Swal.fire("Error", "No se pudo acceder a la cámara", "error");
   }
 }
 
@@ -70,6 +90,8 @@ $("#captureButton").click(async () => {
     const detections = await faceapi
       .detectAllFaces(video, new faceapi.TinyFaceDetectorOptions())
       .withFaceLandmarks()
+      .withFaceExpressions()
+      .withAgeAndGender()
       .withFaceDescriptors();
 
     if (detections.length > 0) {
@@ -77,17 +99,27 @@ $("#captureButton").click(async () => {
         '<i class="fas fa-spinner fa-spin"></i> Procesando...'
       );
 
-      const faceData = detections[0].descriptor;
-      $("#faceData").val(JSON.stringify(faceData));
+      $("#faceData").val(
+        JSON.stringify({
+          descriptor: detections[0].descriptor,
+          gender: detections[0].gender,
+          age: detections[0].age,
+          expressions: detections[0].expressions,
+        })
+      );
 
-      // Ocultar cámara y mostrar formulario
       $("#cameraSection").hide();
       $("#contentSection").show();
       $("#sendEmailForm").show();
       $("#submitButton").show();
 
-      // Mostrar datos en el mensaje
-      $("#body").val(formatFaceData(detections[0]));
+      $("#body").val(
+        formatFaceData({
+          gender: detections[0].gender,
+          age: detections[0].age,
+          expressions: detections[0].expressions,
+        })
+      );
 
       Swal.fire("¡Éxito!", "Rostro reconocido correctamente", "success");
     } else {
@@ -100,49 +132,44 @@ $("#captureButton").click(async () => {
   }
 });
 
-// 4. Función para formatear datos faciales en español
+// 4. Formatear datos
 function formatFaceData(face) {
-  const features = {
-    gender: face.gender || "No detectado",
-    age: Math.round(face.age) || "No detectado",
-    emotions: face.expressions
-      ? Object.entries(face.expressions)
-          .map(([emotion, value]) => `${emotion}: ${(value * 100).toFixed(1)}%`)
-          .join("\n")
-      : "No detectado",
+  const genderMap = {
+    male: "Masculino",
+    female: "Femenino",
   };
 
   return `Datos faciales reconocidos:
-- Género: ${features.gender}
-- Edad aproximada: ${features.age}
-- Emociones:
-${features.emotions}
-- Vector facial (128 dimensiones): 
-${face.descriptor
-  .slice(0, 5)
-  .map((v) => v.toFixed(4))
-  .join(", ")}...`;
+- Género: ${genderMap[face.gender] || "No detectado"}
+- Edad aproximada: ${face.age ? Math.round(face.age) + " años" : "No detectado"}
+- Emociones principales: 
+${
+  face.expressions
+    ? Object.entries(face.expressions)
+        .sort(([, a], [, b]) => b - a)
+        .slice(0, 3)
+        .map(([emotion, value]) => `• ${emotion}: ${(value * 100).toFixed(1)}%`)
+        .join("\n")
+    : "No detectado"
+}`;
 }
 
 // 5. Limpiar recursos
 function cleanUpResources() {
-  // Detener transmisión de cámara
   if (videoStream) {
     videoStream.getTracks().forEach((track) => {
       track.stop();
       videoStream.removeTrack(track);
     });
   }
-
-  // Limpiar intervalos y elementos del DOM
   clearInterval(faceDetectionInterval);
   $("#cameraPreview").empty();
-
   console.log("Recursos liberados correctamente");
 }
-// 6. Detener cámara al enviar formulario
+
+// 6. Evento submit
 $("#sendEmailForm").on("submit", function (event) {
-  event.preventDefault(); // Prevenir recarga de página
+  event.preventDefault();
   cleanUpResources();
 });
 
