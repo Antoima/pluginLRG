@@ -1,4 +1,12 @@
+/* Botón púrpura personalizado */
 .btn-purple {
-  background-color: #6e389d; /* Color púrpura */
+  background-color: #6e389d; /* Color de fondo inicial (púrpura) */
   color: white; /* Color de texto blanco */
+  border: none; /* Opcional: elimina el borde */
+}
+
+/* Estado hover del botón */
+.btn-purple:hover {
+  background-color: #5a2a83; /* Color más oscuro al hacer hover */
+  color: white; /* Asegura que el texto se mantenga blanco */
 }

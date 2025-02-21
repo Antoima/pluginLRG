@@ -15,7 +15,7 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
     
     <!-- Enlace al CSS personalizado -->
-    <link rel="stylesheet" href="../src/css/styles.css">
+    <link rel="stylesheet" href="../../src/css/styles.css">
 </head>
 <body class="bg-gray-100">
 

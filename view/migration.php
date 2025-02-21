@@ -26,7 +26,7 @@
                         <i class="bi bi-envelope-fill" style="font-size: 4rem; color: #db4437;"></i>
                         <h5 class="card-title mt-3">Gmail</h5>
                         <p class="card-text">Migra tus correos desde o hacia tu cuenta de Gmail de forma rápida y segura.</p>
-                        <a href="view/migration.php?service=gmail" class="btn btn-danger">Migrar con Gmail</a>
+                        <a href="google/index.php" class="btn btn-danger">Migrar con Gmail</a>
                     </div>
                 </div>
             </div>
@@ -38,7 +38,7 @@
                         <i class="bi bi-envelope-at" style="font-size: 4rem; color: #0078d4;"></i>
                         <h5 class="card-title mt-3">Outlook</h5>
                         <p class="card-text">Migra tus correos desde o hacia tu cuenta de Outlook de forma sencilla.</p>
-                        <a href="view/migration.php?service=outlook" class="btn btn-primary">Migrar con Outlook</a>
+                        <a href="https://outlook.live.com/" class="btn btn-primary">Migrar con Outlook</a>
                     </div>
                 </div>
             </div>
@@ -50,7 +50,7 @@
                         <i class="bi bi-envelope" style="font-size: 4rem; color: #6e389d;"></i>
                         <h5 class="card-title mt-3">Yahoo</h5>
                         <p class="card-text">Realiza la migración de correos desde o hacia tu cuenta de Yahoo.</p>
-                        <a href="view/migration.php?service=yahoo" class="btn btn-purple">Migrar con Yahoo</a>
+                        <a href="https://mail.yahoo.com/" class="btn btn-purple">Migrar con Yahoo</a>
                     </div>
                 </div>
             </div>
